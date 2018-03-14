@@ -23,6 +23,8 @@ use asi_vulkan::VwInstance;
 
 use ami::Mat4;
 
+use ShapeHandle;
+
 #[derive(Clone)] #[repr(C)] struct TransformFullUniform {
 	mat4: [f32; 16],
 	hcam: u32,
@@ -38,12 +40,6 @@ use ami::Mat4;
 	mat4: [f32; 16],
 	vec4: [f32; 4],
 	hcam: u32,
-}
-
-pub enum ShapeHandle {
-	Alpha(u32),
-	Opaque(u32),
-	Gui(u32),
 }
 
 pub struct Vw {
@@ -419,18 +415,6 @@ impl Vw {
 	}
 }
 
-fn projection(ratio: f32, fov: f32) -> ::Mat4 {
-	let scale = (fov * 0.5 * ::std::f32::consts::PI / 180.).tan().recip();
-	let yscale = scale * ratio;
-
-	Mat4([
-		scale,	0.,	0.,	0.,
-		0.,	yscale,	0.,	0.,
-		0.,	0.,	1.,	1.,
-		0.,	0.,	0., 	1.,
-	])
-}
-
 fn draw_shape(connection: &Connection, cmdbuf: VkCommandBuffer, shape: &Shape) {
 	unsafe {
 		asi_vulkan::cmd_bind_vb(connection,
@@ -623,7 +607,7 @@ impl Renderer {
 			&complex_vert, &complex_bfrag, 1, 3, true);
 
 		let ar = vw.width as f32 / vw.height as f32;
-		let projection = projection(ar, 90.0);
+		let projection = ::base::projection(ar, 90.0);
 		let (camera_memory, effect_memory) = unsafe {
 			asi_vulkan::vw_camera_new(&connection,vw.device,vw.gpu,
 				(clear_color.0, clear_color.1, clear_color.2,
@@ -791,7 +775,7 @@ impl Renderer {
 		swapchain_delete(&self.connection, &mut self.vw);
 		swapchain_resize(&self.connection, &mut self.vw);
 
-		self.projection = projection(self.ar, 90.0);
+		self.projection = ::base::projection(self.ar, 90.0);
 		self.camera();
 	}
 

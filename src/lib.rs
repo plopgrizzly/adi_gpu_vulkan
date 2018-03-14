@@ -4,8 +4,7 @@
 //
 // src/lib.rs
 
-//! Aldaron's Device Interface / GPU is a library developed by Plop Grizzly for
-//! interfacing with the GPU to render graphics or do fast calculations.
+//! Vulkan implementation for adi_gpu.
 
 // #![no_std]
 
@@ -20,28 +19,31 @@ extern crate libc;
 /// Transform represents a transformation matrix.
 pub(crate) mod renderer;
 
+pub use base::Shape;
+pub use base::Gradient;
+pub use base::Model;
+pub use base::TexCoords;
+pub use renderer::Texture;
+
 use ami::*;
 use adi_gpu_base as base;
-
-pub use renderer::Texture;
+use adi_gpu_base::ShapeHandle;
 
 /// To render anything with adi_gpu, you have to make a `Display`
 pub struct Display {
+	window: awi::Window,
 	renderer: renderer::Renderer,
 }
 
 impl base::Display for Display {
-	type Model = Model;
 	type Texture = Texture;
-	type Gradient = Gradient;
-	type TexCoords = TexCoords;
-	type Shape = Shape;
 
-	fn new(window: &awi::Window) -> Option<Self> {
+	fn new(title: &str, icon: &afi::Graphic) -> Option<Self> {
+		let window = awi::Window::new(title, &icon, None);
 		let renderer = renderer::Renderer::new("ADI Application",
 			window.get_connection(), (0.0, 0.0, 0.0));
 
-		Some(Display { renderer })
+		Some(Display { window, renderer })
 	}
 
 	fn color(&mut self, color: (f32, f32, f32)) {
@@ -92,7 +94,7 @@ impl base::Display for Display {
 		color: [f32; 4], blending: bool, fancy: bool, fog: bool,
 		camera: bool) -> Shape
 	{
-		Shape(self.renderer.solid(model.0, transform.0, color,
+		base::new_shape(self.renderer.solid(model.0, transform.0, color,
 			blending, fancy, fog, camera))
 	}
 
@@ -101,7 +103,7 @@ impl base::Display for Display {
 		colors: Gradient, blending: bool, fancy: bool, fog: bool,
 		camera: bool) -> Shape
 	{
-		Shape(self.renderer.gradient(model.0, transform.0,
+		base::new_shape(self.renderer.gradient(model.0, transform.0,
 			colors.0, blending, fancy, fog, camera))
 	}
 
@@ -110,7 +112,7 @@ impl base::Display for Display {
 		texture: Texture, tc: TexCoords, blending: bool, fancy: bool,
 		fog: bool, camera: bool) -> Shape
 	{
-		Shape(self.renderer.textured(model.0, transform.0,
+		base::new_shape(self.renderer.textured(model.0, transform.0,
 			texture, tc.0, blending, fancy, fog, camera))
 	}
 
@@ -119,7 +121,7 @@ impl base::Display for Display {
 		texture: Texture, tc: TexCoords, alpha: f32, fancy: bool,
 		fog: bool, camera: bool) -> Shape
 	{
-		Shape(self.renderer.faded(model.0, transform.0,
+		base::new_shape(self.renderer.faded(model.0, transform.0,
 			texture, tc.0, alpha, fancy, fog, camera))
 	}
 
@@ -128,7 +130,7 @@ impl base::Display for Display {
 		texture: Texture, tc: TexCoords, tint: [f32; 4], blending: bool,
 		fancy: bool, fog: bool, camera: bool) -> Shape
 	{
-		Shape(self.renderer.tinted(model.0, transform.0,
+		base::new_shape(self.renderer.tinted(model.0, transform.0,
 			texture, tc.0, tint, blending, fancy, fog, camera))
 	}
 
@@ -137,38 +139,25 @@ impl base::Display for Display {
 		texture: Texture, tc: TexCoords, tints: Gradient,
 		blending: bool, fancy: bool, fog: bool, camera: bool) -> Shape
 	{
-		Shape(self.renderer.complex(model.0, transform.0,
+		base::new_shape(self.renderer.complex(model.0, transform.0,
 			texture, tc.0, tints.0, blending, fancy, fog, camera))
 	}
 
-	fn transform(&mut self, shape: &mut Self::Shape, transform: &Mat4) {
-		self.renderer.transform(&mut shape.0, transform);
+	fn transform(&mut self, shape: &mut Shape, transform: &Mat4) {
+		self.renderer.transform(&mut base::get_shape(shape), transform);
 	}
 
 	fn resize(&mut self, wh: (u32, u32)) -> () {
 		self.renderer.resize(wh);
 	}
-}
 
-/// A list of vertices that make a shape.
-#[derive(Copy, Clone)]
-pub struct Model(usize);
+	fn wh(&self) -> (u32, u32) {
+		self.window.wh()
+	}
 
-impl base::Model for Model {
-}
-
-/// A list of colors to be paired with vertices.
-#[derive(Copy, Clone)]
-pub struct Gradient(usize);
-
-impl base::Gradient for Gradient {
-}
-
-/// A list of texture coordinates to be paired with vertices.
-#[derive(Copy, Clone)]
-pub struct TexCoords(usize);
-
-impl base::TexCoords for TexCoords {
+	fn input(&mut self) -> Option<awi::Input> {
+		self.window.input()
+	}
 }
 
 impl base::Texture for Texture {
@@ -176,10 +165,4 @@ impl base::Texture for Texture {
 	fn wh(&self) -> (u32, u32) {
 		(self.w, self.h)
 	}
-}
-
-/// A renderable object that exists on the `Display`.
-pub struct Shape(renderer::ShapeHandle);
-
-impl base::Shape for Shape {
 }
