@@ -29,6 +29,7 @@ void main() {
 	vec4 sampled = texture(tex, texcoord.xy);
 	vec4 out_color = vec4(sampled.rgb, sampled.a * texcoord.a);
 
+	// Fog Calculation
 	if(out_color.a <= 0.0) {
 		discard;
 	} else if(uniforms.has_camera == 2) {

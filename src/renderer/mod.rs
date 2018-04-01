@@ -491,9 +491,6 @@ impl Renderer {
 		let solid_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/solid-frag.spv"));
-		let solid_nafrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/solid-nafrag.spv"));
 		let solid_bfrag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/solid-bfrag.spv"));
@@ -503,9 +500,6 @@ impl Renderer {
 		let texture_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/texture-frag.spv"));
-		let texture_nafrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/texture-nafrag.spv"));
 		let texture_bfrag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/texture-bfrag.spv"));
@@ -515,9 +509,6 @@ impl Renderer {
 		let gradient_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let gradient_nafrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/gradient-nafrag.spv"));
 		let gradient_bfrag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-bfrag.spv"));
@@ -536,9 +527,6 @@ impl Renderer {
 		let tinted_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let tinted_nafrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/gradient-nafrag.spv"));
 		let tinted_bfrag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-bfrag.spv"));
@@ -548,9 +536,6 @@ impl Renderer {
 		let complex_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let complex_nafrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/gradient-nafrag.spv"));
 		let complex_bfrag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-bfrag.spv"));
@@ -559,7 +544,7 @@ impl Renderer {
 			&solid_vert, &solid_frag, 0, 1, true);
 		let style_nasolid = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
-			&solid_vert, &solid_nafrag, 0, 1, false);
+			&solid_vert, &solid_frag, 0, 1, false);
 		let style_bsolid = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&solid_vert, &solid_bfrag, 0, 1, true);
@@ -568,7 +553,7 @@ impl Renderer {
 			&texture_vert, &texture_frag, 1, 2, true);
 		let style_natexture = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
-			&texture_vert, &texture_nafrag, 1, 2, false);
+			&texture_vert, &texture_frag, 1, 2, false);
 		let style_btexture = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&texture_vert, &texture_bfrag, 1, 2, true);
@@ -577,7 +562,7 @@ impl Renderer {
 			&gradient_vert, &gradient_frag, 0, 2, true);
 		let style_nagradient = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
-			&gradient_vert, &gradient_nafrag, 0, 2, false);
+			&gradient_vert, &gradient_frag, 0, 2, false);
 		let style_bgradient = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&gradient_vert, &gradient_bfrag, 0, 2, true);
@@ -592,7 +577,7 @@ impl Renderer {
 			&tinted_vert, &tinted_frag, 1, 2, true);
 		let style_natinted = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
-			&tinted_vert, &tinted_nafrag, 1, 2, false);
+			&tinted_vert, &tinted_frag, 1, 2, false);
 		let style_btinted = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&tinted_vert, &tinted_bfrag, 1, 2, true);
@@ -601,7 +586,7 @@ impl Renderer {
 			&complex_vert, &complex_frag, 1, 3, true);
 		let style_nacomplex = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
-			&complex_vert, &complex_nafrag, 1, 3, false);
+			&complex_vert, &complex_frag, 1, 3, false);
 		let style_bcomplex = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&complex_vert, &complex_bfrag, 1, 3, true);
