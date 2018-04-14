@@ -1,35 +1,28 @@
-# Aldaron's Device Interface / GPU / Vulkan                                    #
-# Copyright (c) 2018 Jeron Aldaron Lau <jeron.lau@plopgrizzly.com>             #
-# Licensed under the MIT LICENSE                                               #
-#                             _        _                                       #
-#                            /@\——————/@\                                      #
-# .———  .                   |   o    o   |     .————      .            .       #
-# |   | |  .———   .———   .——.     []     .——.  |      .——    ———: ———: | .   . #
-# |   | |  |   |  |   |  \   \   <##>   /   /  |      |   |    /    /  | |   | #
-# |———  |  |   |  |   |   |   ¯        ¯   |   |   -- |   |   /    /   |  \ /  #
-# |     |  |   |  |———    |                |   |    | |   |  /    /    |   |   #
-# |     |   ———   |       |                |    ————  |   | :——— :———  |   |   #
-#                 |        \              /                              __/   #
-#                           ¯————————————¯                                     #
-# Cargo.toml                                                                   #
-
-################################################################################
+# Cargo.toml -- Aldaron's Device Interface / GPU / Vulkan
+# Copyright (c) 2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
+# Licensed under the MIT LICENSE
+#                             _        _
+#                            /@\——————/@\
+# .———  .                   |   o    o   |     .————      .            .
+# |   | |  .———   .———   .——.     []     .——.  |      .——    ———: ———: | .   .
+# |   | |  |   |  |   |  \   \   <##>   /   /  |      |   |    /    /  | |   |
+# |———  |  |   |  |   |   |   ¯        ¯   |   |   -- |   |   /    /   |  \ /
+# |     |  |   |  |———    |                |   |    | |   |  /    /    |   |
+# |     |   ———   |       |                |    ————  |   | :——— :———  |   |
+#                 |        \              /                              __/
+#                           ¯————————————¯
 
 [package]
 name = "adi_gpu_vulkan"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
-	"Jeron Aldaron Lau <jeron.lau@plopgrizzly.com>"
+	"Jeron A. Lau <jeron.lau@plopgrizzly.com>"
 ]
-
-################################################################################
 
 license = "MIT"
 documentation = "https://docs.rs/adi_gpu_vulkan"
 homepage = "http://plopgrizzly.com/adi_gpu_vulkan"
 repository = "https://github.com/plopgrizzly/adi_gpu_vulkan"
-
-################################################################################
 
 readme = "README.md"
 description = "Vulkan implementation for adi_gpu"
@@ -37,21 +30,14 @@ keywords = [ "vulkan", "graphics", "gui", "hardware", "rendering" ]
 categories = ["gui", "game-engines", "hardware-support", "multimedia::video",
 	"rendering::graphics-api"]
 
-################################################################################
-
 exclude = [
 	"examples/*", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", ".gitignore",
 	"_config.yml", "ISSUE_TEMPLATE.md", "icon.png", "icon.ico"
 ]
 
-################################################################################
-
 [dependencies]
-adi_gpu_base = { path = "../adi_gpu_base" }#"^0.1"
+adi_gpu_base = "^0.2"
 asi_vulkan = "^0.3"
 ami = "^0.6"
-awi = { path = "../awi" } # "^0.2"
 afi = "^0.3.2"
 libc = "^0.2" # TODO: Remove dependency by having all ffi code in asi crates.
-
-################################################################################

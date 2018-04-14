@@ -1,8 +1,6 @@
-// Aldaron's Device Interface / GPU
-// Copyright (c) 2017 Plop Grizzly, Jeron Lau <jeron.lau@plopgrizzly.com>
+// shaders/tinted-vert.glsl -- Aldaron's Device Interface / GPU / Vulkan
+// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 // Licensed under the MIT LICENSE
-//
-// src/native_renderer/vulkan/glsl/tinted.vert
 
 #version 450
 #extension GL_ARB_separate_shader_objects : enable

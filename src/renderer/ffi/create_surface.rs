@@ -1,12 +1,10 @@
-// Aldaron's Device Interface / GPU
-// Copyright (c) 2017-2018 Jeron Lau <jeron.lau@plopgrizzly.com>
+// renderer/ffi/create_surface.rs -- Aldaron's Device Interface / GPU / Vulkan
+// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 // Licensed under the MIT LICENSE
-//
-// src/renderer/ffi/vulkan/create_surface.rs
 
 // TODO: Make surface a buffer and blit onto screen with window manager.
 
-use awi::WindowConnection;
+use adi_gpu_base::WindowConnection;
 
 use asi_vulkan;
 use asi_vulkan::types::*;

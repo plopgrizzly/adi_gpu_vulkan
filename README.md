@@ -1,8 +1,8 @@
-# adi_gpu_vulkan 0.1.0
+# adi_gpu_vulkan 0.2.0
 Vulkan implementation for adi_gpu
 
-[Cargo](https://crates.io/crates/asi_vulkan) /
-[Documentation](https://docs.rs/asi_vulkan)
+[Cargo](https://crates.io/crates/adi_gpu_vulkan) /
+[Documentation](https://docs.rs/adi_gpu_vulkan)
 
 # Contributing
 If you'd like to help implement functions for unsupported platforms, fix bugs,

@@ -1,8 +1,6 @@
-// Aldaron's Device Interface / GPU / Vulkan
-// Copyright (c) 2017-2018 Jeron Lau <jeron.lau@plopgrizzly.com>
+// lib.rs -- Aldaron's Device Interface / GPU / Vulkan
+// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 // Licensed under the MIT LICENSE
-//
-// src/lib.rs
 
 //! Vulkan implementation for adi_gpu.
 
@@ -10,7 +8,6 @@
 
 #[macro_use]
 extern crate ami;
-extern crate awi;
 extern crate afi;
 extern crate asi_vulkan;
 extern crate adi_gpu_base;
@@ -31,7 +28,7 @@ use adi_gpu_base::ShapeHandle;
 
 /// To render anything with adi_gpu, you have to make a `Display`
 pub struct Display {
-	window: awi::Window,
+	window: adi_gpu_base::Window,
 	renderer: renderer::Renderer,
 }
 
@@ -39,7 +36,7 @@ impl base::Display for Display {
 	type Texture = Texture;
 
 	fn new(title: &str, icon: &afi::Graphic) -> Option<Self> {
-		let window = awi::Window::new(title, &icon, None);
+		let window = adi_gpu_base::Window::new(title, &icon, None);
 		let renderer = renderer::Renderer::new("ADI Application",
 			window.get_connection(), (0.0, 0.0, 0.0));
 
@@ -50,7 +47,7 @@ impl base::Display for Display {
 		self.renderer.bg_color(color);
 	}
 
-	fn update(&mut self) -> Option<awi::Input> {
+	fn update(&mut self) -> Option<adi_gpu_base::Input> {
 		if let Some(input) = self.window.update() {
 			return Some(input);
 		}

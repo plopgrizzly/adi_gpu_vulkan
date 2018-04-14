@@ -1,13 +1,11 @@
-// Aldaron's Device Interface / GPU
-// Copyright (c) 2017 Plop Grizzly, Jeron Lau <jeron.lau@plopgrizzly.com>
+// renderer/mod.rs -- Aldaron's Device Interface / GPU / Vulkan
+// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 // Licensed under the MIT LICENSE
-//
-// src/renderer/mod.rs
 
 use std::mem;
 
 // use awi::Window;
-use awi::WindowConnection;
+use adi_gpu_base::WindowConnection;
 
 mod ffi;
 
