@@ -485,54 +485,36 @@ impl Renderer {
 		let solid_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/solid-frag.spv"));
-		let solid_bfrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/solid-bfrag.spv"));
 		let texture_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/texture-vert.spv"));
 		let texture_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/texture-frag.spv"));
-		let texture_bfrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/texture-bfrag.spv"));
 		let gradient_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-vert.spv"));
 		let gradient_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let gradient_bfrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/gradient-bfrag.spv"));
 		let faded_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/faded-vert.spv"));
 		let faded_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/faded-frag.spv"));
-		let faded_bfrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/faded-bfrag.spv"));
 		let tinted_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-vert.spv"));
 		let tinted_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let tinted_bfrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/gradient-bfrag.spv"));
 		let complex_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-vert.spv"));
 		let complex_frag = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let complex_bfrag = asi_vulkan::ShaderModule::new(&connection,
-			vw.device, include_bytes!(
-			"../shaders/res/gradient-bfrag.spv"));
 		let style_solid = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&solid_vert, &solid_frag, 0, 1, true);
