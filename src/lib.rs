@@ -98,59 +98,59 @@ impl base::Display for Display {
 
 	#[inline(always)]
 	fn shape_solid(&mut self, model: &Model, transform: Mat4,
-		color: [f32; 4], blending: bool, fancy: bool, fog: bool,
+		color: [f32; 4], blending: bool, fog: bool,
 		camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.solid(model.0, transform.0, color,
-			blending, fancy, fog, camera))
+			blending, fog, camera))
 	}
 
 	#[inline(always)]
 	fn shape_gradient(&mut self, model: &Model, transform: Mat4,
-		colors: Gradient, blending: bool, fancy: bool, fog: bool,
+		colors: Gradient, blending: bool, fog: bool,
 		camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.gradient(model.0, transform.0,
-			colors.0, blending, fancy, fog, camera))
+			colors.0, blending, fog, camera))
 	}
 
 	#[inline(always)]
 	fn shape_texture(&mut self, model: &Model, transform: Mat4,
-		texture: Texture, tc: TexCoords, blending: bool, fancy: bool,
+		texture: Texture, tc: TexCoords, blending: bool,
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.textured(model.0, transform.0,
-			texture, tc.0, blending, fancy, fog, camera))
+			texture, tc.0, blending, fog, camera))
 	}
 
 	#[inline(always)]
 	fn shape_faded(&mut self, model: &Model, transform: Mat4,
-		texture: Texture, tc: TexCoords, alpha: f32, fancy: bool,
+		texture: Texture, tc: TexCoords, alpha: f32,
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.faded(model.0, transform.0,
-			texture, tc.0, alpha, fancy, fog, camera))
+			texture, tc.0, alpha, fog, camera))
 	}
 
 	#[inline(always)]
 	fn shape_tinted(&mut self, model: &Model, transform: Mat4,
 		texture: Texture, tc: TexCoords, tint: [f32; 4], blending: bool,
-		fancy: bool, fog: bool, camera: bool) -> Shape
+		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.tinted(model.0, transform.0,
-			texture, tc.0, tint, blending, fancy, fog, camera))
+			texture, tc.0, tint, blending, fog, camera))
 	}
 
 	#[inline(always)]
 	fn shape_complex(&mut self, model: &Model, transform: Mat4,
 		texture: Texture, tc: TexCoords, tints: Gradient,
-		blending: bool, fancy: bool, fog: bool, camera: bool) -> Shape
+		blending: bool, fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.complex(model.0, transform.0,
-			texture, tc.0, tints.0, blending, fancy, fog, camera))
+			texture, tc.0, tints.0, blending, fog, camera))
 	}
 
-	fn transform(&mut self, shape: &mut Shape, transform: &Mat4) {
+	fn transform(&mut self, shape: &mut Shape, transform: Mat4) {
 		self.renderer.transform(&mut base::get_shape(shape), transform);
 	}
 

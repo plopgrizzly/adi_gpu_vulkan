@@ -456,21 +456,15 @@ pub struct Renderer {
 	gradients: Vec<Gradient>,
 	style_solid: Style,
 	style_nasolid: Style,
-	style_bsolid: Style,
 	style_texture: Style,
 	style_natexture: Style,
-	style_btexture: Style,
 	style_gradient: Style,
 	style_nagradient: Style,
-	style_bgradient: Style,
 	style_faded: Style,
-	style_bfaded: Style,
 	style_tinted: Style,
 	style_natinted: Style,
-	style_btinted: Style,
 	style_complex: Style,
 	style_nacomplex: Style,
-	style_bcomplex: Style,
 	projection: ::Mat4,
 	camera_memory: asi_vulkan::Memory<TransformUniform>,
 	effect_memory: asi_vulkan::Memory<FogUniform>,
@@ -545,51 +539,33 @@ impl Renderer {
 		let style_nasolid = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&solid_vert, &solid_frag, 0, 1, false);
-		let style_bsolid = asi_vulkan::new_pipeline(&connection,
-			vw.device, vw.render_pass, vw.width, vw.height,
-			&solid_vert, &solid_bfrag, 0, 1, true);
 		let style_texture = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&texture_vert, &texture_frag, 1, 2, true);
 		let style_natexture = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&texture_vert, &texture_frag, 1, 2, false);
-		let style_btexture = asi_vulkan::new_pipeline(&connection,
-			vw.device, vw.render_pass, vw.width, vw.height,
-			&texture_vert, &texture_bfrag, 1, 2, true);
 		let style_gradient = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&gradient_vert, &gradient_frag, 0, 2, true);
 		let style_nagradient = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&gradient_vert, &gradient_frag, 0, 2, false);
-		let style_bgradient = asi_vulkan::new_pipeline(&connection,
-			vw.device, vw.render_pass, vw.width, vw.height,
-			&gradient_vert, &gradient_bfrag, 0, 2, true);
 		let style_faded = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&faded_vert, &faded_frag, 1, 2, true);
-		let style_bfaded = asi_vulkan::new_pipeline(&connection,
-			vw.device, vw.render_pass, vw.width, vw.height,
-			&faded_vert, &faded_bfrag, 1, 2, true);
 		let style_tinted = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&tinted_vert, &tinted_frag, 1, 2, true);
 		let style_natinted = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&tinted_vert, &tinted_frag, 1, 2, false);
-		let style_btinted = asi_vulkan::new_pipeline(&connection,
-			vw.device, vw.render_pass, vw.width, vw.height,
-			&tinted_vert, &tinted_bfrag, 1, 2, true);
 		let style_complex = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&complex_vert, &complex_frag, 1, 3, true);
 		let style_nacomplex = asi_vulkan::new_pipeline(&connection,
 			vw.device, vw.render_pass, vw.width, vw.height,
 			&complex_vert, &complex_frag, 1, 3, false);
-		let style_bcomplex = asi_vulkan::new_pipeline(&connection,
-			vw.device, vw.render_pass, vw.width, vw.height,
-			&complex_vert, &complex_bfrag, 1, 3, true);
 
 		let ar = vw.width as f32 / vw.height as f32;
 		let projection = ::base::projection(ar, 90.0);
@@ -614,12 +590,12 @@ impl Renderer {
 			gradients: Vec::new(),
 			models: Vec::new(),
 			texcoords: Vec::new(),
-			style_solid, style_nasolid, style_bsolid,
-			style_texture, style_natexture, style_btexture,
-			style_gradient, style_nagradient, style_bgradient,
-			style_faded, style_bfaded,
-			style_tinted, style_natinted, style_btinted,
-			style_complex, style_nacomplex, style_bcomplex,
+			style_solid, style_nasolid,
+			style_texture, style_natexture,
+			style_gradient, style_nagradient,
+			style_faded,
+			style_tinted, style_natinted,
+			style_complex, style_nacomplex,
 			clear_color,
 			frustum: ::ami::Frustum::new(
 				::ami::Vec3::new(0.0, 0.0, 0.0),
@@ -897,7 +873,7 @@ impl Renderer {
 	}
 
 	pub fn textured(&mut self, model: usize, mat4: [f32; 16],
-		texture: Texture, texcoords: usize, alpha: bool, blend: bool,
+		texture: Texture, texcoords: usize, alpha: bool,
 		fog: bool, camera: bool) -> ShapeHandle
 	{
 		if self.models[model].vertex_count
@@ -912,14 +888,10 @@ impl Renderer {
 				&self.connection,
 				self.vw.device,
 				self.vw.gpu,
-				if blend {
-					self.style_btexture
+				if alpha {
+					self.style_texture
 				} else {
-					if alpha {
-						self.style_texture
-					} else {
-						self.style_natexture
-					}
+					self.style_natexture
 				},
 				TransformFullUniform {
 					mat4,
@@ -959,7 +931,7 @@ impl Renderer {
 	}
 
 	pub fn solid(&mut self, model: usize, mat4: [f32; 16], color: [f32; 4],
-		alpha: bool, blend: bool, fog: bool, camera: bool)
+		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
 		// Add an instance
@@ -968,14 +940,10 @@ impl Renderer {
 				&self.connection,
 				self.vw.device,
 				self.vw.gpu,
-				if blend {
-					self.style_bsolid
+				if alpha {
+					self.style_solid
 				} else {
-					if alpha {
-						self.style_solid
-					} else {
-						self.style_nasolid
-					}
+					self.style_nasolid
 				},
 				TransformAndColorUniform {
 					vec4: color,
@@ -1016,7 +984,7 @@ impl Renderer {
 	}
 
 	pub fn gradient(&mut self, model: usize, mat4: [f32; 16], colors: usize,
-		alpha: bool, blend: bool, fog: bool, camera: bool)
+		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
 		if self.models[model].vertex_count
@@ -1031,14 +999,10 @@ impl Renderer {
 				&self.connection,
 				self.vw.device,
 				self.vw.gpu,
-				if blend {
-					self.style_bgradient
+				if alpha {
+					self.style_gradient
 				} else {
-					if alpha {
-						self.style_gradient
-					} else {
-						self.style_nagradient
-					}
+					self.style_nagradient
 				},
 				TransformFullUniform {
 					mat4,
@@ -1078,7 +1042,7 @@ impl Renderer {
 	}
 
 	pub fn faded(&mut self, model: usize, mat4: [f32; 16], texture: Texture,
-		texcoords: usize, fade_factor: f32, blend: bool, fog: bool,
+		texcoords: usize, fade_factor: f32, fog: bool,
 		camera: bool) -> ShapeHandle
 	{
 		if self.models[model].vertex_count
@@ -1093,11 +1057,7 @@ impl Renderer {
 				&self.connection,
 				self.vw.device,
 				self.vw.gpu,
-				if blend {
-					self.style_bfaded
-				} else {
-					self.style_faded
-				},
+				self.style_faded,
 				TransformAndFadeUniform {
 					mat4,
 					hcam: fog as u32 + camera as u32,
@@ -1136,7 +1096,7 @@ impl Renderer {
 
 	pub fn tinted(&mut self, model: usize, mat4: [f32; 16],
 		texture: Texture, texcoords: usize, color: [f32; 4],
-		alpha: bool, blend: bool, fog: bool, camera: bool)
+		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
 		if self.models[model].vertex_count
@@ -1151,14 +1111,10 @@ impl Renderer {
 				&self.connection,
 				self.vw.device,
 				self.vw.gpu,
-				if blend {
-					self.style_btinted
+				if alpha {
+					self.style_tinted
 				} else {
-					if alpha {
-						self.style_tinted
-					} else {
-						self.style_natinted
-					}
+					self.style_natinted
 				},
 				TransformAndColorUniform {
 					mat4,
@@ -1200,7 +1156,7 @@ impl Renderer {
 
 	pub fn complex(&mut self, model: usize, mat4: [f32; 16],
 		texture: Texture, texcoords: usize, colors: usize, alpha: bool,
-		blend: bool, fog: bool, camera: bool) -> ShapeHandle
+		fog: bool, camera: bool) -> ShapeHandle
 	{
 		if self.models[model].vertex_count
 			!= self.texcoords[texcoords].vertex_count ||
@@ -1216,14 +1172,10 @@ impl Renderer {
 				&self.connection,
 				self.vw.device,
 				self.vw.gpu,
-				if blend {
-					self.style_bcomplex
+				if alpha {
+					self.style_complex
 				} else {
-					if alpha {
-						self.style_complex
-					} else {
-						self.style_nacomplex
-					}
+					self.style_nacomplex
 				},
 				TransformFullUniform {
 					mat4,
@@ -1262,9 +1214,7 @@ impl Renderer {
 		}
 	}
 
-	pub fn transform(&mut self, shape: &mut ShapeHandle,
-		transform: &::Mat4)
-	{
+	pub fn transform(&mut self, shape: &mut ShapeHandle, transform: ::Mat4){
 		let uniform = TransformUniform {
 			mat4: transform.0,
 		};
@@ -1273,7 +1223,7 @@ impl Renderer {
 			ShapeHandle::Opaque(ref mut x) => {
 				let mut shape = self.opaque_octree[*x].clone();
 
-				shape.position = *transform *
+				shape.position = transform *
 					self.opaque_octree[*x].center;
 				self.opaque_octree.modify(x, shape);
 
@@ -1285,7 +1235,7 @@ impl Renderer {
 			ShapeHandle::Alpha(ref mut x) => {
 				let mut shape = self.alpha_octree[*x].clone();
 
-				shape.position = *transform *
+				shape.position = transform *
 					self.alpha_octree[*x].center;
 				self.alpha_octree.modify(x, shape);
 
@@ -1298,7 +1248,7 @@ impl Renderer {
 				let x = x as usize; // for indexing
 				let mut shape = self.gui_vec[x].clone();
 
-				shape.position = *transform *
+				shape.position = transform *
 					self.gui_vec[x].center;
 
 				ffi::copy_memory(&self.connection,
