@@ -50,8 +50,15 @@ impl base::Display for Display {
 		self.renderer.bg_color(color);
 	}
 
-	fn update(&mut self) {
+	fn update(&mut self) -> Option<awi::Input> {
+		if let Some(input) = self.window.update() {
+			return Some(input);
+		}
+
+		// Update Window:
 		self.renderer.update();
+		// Return None, there was no input, updated screen.
+		None
 	}
 
 	fn camera(&mut self, xyz: (f32,f32,f32), rotate_xyz: (f32,f32,f32)) {
@@ -153,10 +160,6 @@ impl base::Display for Display {
 
 	fn wh(&self) -> (u32, u32) {
 		self.window.wh()
-	}
-
-	fn input(&mut self) -> Option<awi::Input> {
-		self.window.input()
 	}
 }
 
