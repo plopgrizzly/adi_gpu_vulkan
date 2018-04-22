@@ -14,7 +14,7 @@
 
 [package]
 name = "adi_gpu_vulkan"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
 	"Jeron A. Lau <jeron.lau@plopgrizzly.com>"
 ]
@@ -36,8 +36,7 @@ exclude = [
 ]
 
 [dependencies]
-adi_gpu_base = "^0.2"
+adi_gpu_base = "^0.4"
 asi_vulkan = "^0.3"
 ami = "^0.6"
-afi = "^0.3.2"
 libc = "^0.2" # TODO: Remove dependency by having all ffi code in asi crates.

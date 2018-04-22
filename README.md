@@ -1,4 +1,4 @@
-# adi_gpu_vulkan 0.2.0
+# adi_gpu_vulkan 0.3
 Vulkan implementation for adi_gpu
 
 [Cargo](https://crates.io/crates/adi_gpu_vulkan) /

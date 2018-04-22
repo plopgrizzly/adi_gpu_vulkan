@@ -8,7 +8,6 @@
 
 #[macro_use]
 extern crate ami;
-extern crate afi;
 extern crate asi_vulkan;
 extern crate adi_gpu_base;
 extern crate libc;
@@ -24,7 +23,7 @@ pub use renderer::Texture;
 
 use ami::*;
 use adi_gpu_base as base;
-use adi_gpu_base::ShapeHandle;
+use adi_gpu_base::{ ShapeHandle, Graphic };
 
 /// To render anything with adi_gpu, you have to make a `Display`
 pub struct Display {
@@ -35,8 +34,9 @@ pub struct Display {
 impl base::Display for Display {
 	type Texture = Texture;
 
-	fn new(title: &str, icon: &afi::Graphic) -> Option<Self> {
-		let window = adi_gpu_base::Window::new(title, &icon, None);
+	fn new<G: AsRef<Graphic>>(title: &str, icon: G) -> Option<Self> {
+		let window = adi_gpu_base::Window::new(title, icon.as_ref(),
+			None);
 		let renderer = renderer::Renderer::new("ADI Application",
 			window.get_connection(), (0.0, 0.0, 0.0));
 
@@ -75,8 +75,8 @@ impl base::Display for Display {
 		}
 	}
 
-	fn texture(&mut self, graphic: afi::Graphic) -> Texture {
-		let (w, h, pixels) = graphic.as_slice();
+	fn texture<G: AsRef<Graphic>>(&mut self, graphic: G) -> Texture {
+		let (w, h, pixels) = graphic.as_ref().as_slice();
 
 		self.renderer.texture(w, h, pixels)
 	}
