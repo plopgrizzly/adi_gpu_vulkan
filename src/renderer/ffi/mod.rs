@@ -73,10 +73,10 @@ pub fn copy_memory_pitched<T>(connection: &asi_vulkan::Connection,
 }
 
 pub fn cmd_draw(connection: &asi_vulkan::Connection,
-	cmd_buffer: VkCommandBuffer, vertex_count: u32, vertex_offset: i32)
+	cmd_buffer: VkCommandBuffer, vertex_count: u32)
 {
 	unsafe {
 		asi_vulkan::cmd_draw(connection, cmd_buffer, vertex_count, 1, 0,
-			vertex_offset, 0);
+			0);
 	}
 }

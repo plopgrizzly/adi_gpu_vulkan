@@ -87,19 +87,14 @@ pub struct Shape {
 	buffers: [VkBuffer; 3],
 	vertice_count: u32,
 	instance: VwInstance,
-	offset: u64,
 	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
 	center: ::ami::Vec3<f32>,
 	position: ::ami::Vec3<f32>,
 }
 
 pub struct Model {
-	vertex_buffer: VkBuffer,
-	#[allow(unused)] // TODO: Use for freeing
-	vertex_memory: VkDeviceMemory,
+	shape: asi_vulkan::Shape,
 	vertex_count: u32,
-	indice_count: u32,
-	offset: u64,
 	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
 	center: ::ami::Vec3<f32>,
 }
@@ -417,8 +412,7 @@ fn draw_shape(connection: &Connection, cmdbuf: VkCommandBuffer, shape: &Shape) {
 	unsafe {
 		asi_vulkan::cmd_bind_vb(connection,
 			cmdbuf,
-			&shape.buffers[..shape.num_buffers],
-			shape.offset);
+			&shape.buffers[..shape.num_buffers]);
 
 		asi_vulkan::cmd_bind_pipeline(&connection,
 			cmdbuf,
@@ -432,8 +426,7 @@ fn draw_shape(connection: &Connection, cmdbuf: VkCommandBuffer, shape: &Shape) {
 
 	ffi::cmd_draw(&connection,
 		cmdbuf,
-		shape.vertice_count, 0);
-//		shape.offset as i32);
+		shape.vertice_count);
 }
 
 pub struct Renderer {
@@ -736,16 +729,13 @@ impl Renderer {
 	}
 
 	/// Push a model (collection of vertices) into graphics memory.
-	pub fn model(&mut self, vertices: &[f32], indices: &[u32]) -> usize {
-		let (vertex_buffer, vertex_memory, offset) = unsafe {
-			asi_vulkan::new_shape(
-				&self.connection,
-				self.vw.device,
-				self.vw.gpu,
-				vertices,
-				indices,
-			)
-		};
+	pub fn model(&mut self, vertices: &[f32]) -> usize {
+		let shape = asi_vulkan::Shape::new(
+			&self.connection,
+			self.vw.device,
+			self.vw.gpu,
+			vertices,
+		);
 
 		let a = self.models.len();
 
@@ -795,11 +785,8 @@ impl Renderer {
 		let n = (vertices.len() / 4) as f32;
 
 		self.models.push(Model {
-			vertex_buffer,
-			vertex_memory,
+			shape,
 			vertex_count: vertices.len() as u32 / 4,
-			indice_count: indices.len() as u32,
-			offset,
 			bounds: [(xmin, xmax), (ymin, ymax), (zmin, zmax)],
 			center: ::ami::Vec3::new(xtot / n, ytot / n, ztot / n),
 		});
@@ -889,12 +876,11 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].vertex_buffer,
+				self.models[model].shape.buffers.0,
 				self.texcoords[texcoords].vertex_buffer,
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].indice_count,
-			offset: self.models[model].offset,
+			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
 			center: self.models[model].center,
 			position: Mat4(mat4) * self.models[model].center,
@@ -942,12 +928,11 @@ impl Renderer {
 			instance,
 			num_buffers: 1,
 			buffers: [
-				self.models[model].vertex_buffer,
+				self.models[model].shape.buffers.0,
 				unsafe { mem::uninitialized() },
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].indice_count,
-			offset: self.models[model].offset,
+			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
 			center: self.models[model].center,
 			position: Mat4(mat4) * self.models[model].center,
@@ -1000,12 +985,11 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].vertex_buffer,
+				self.models[model].shape.buffers.0,
 				self.gradients[colors].vertex_buffer,
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].indice_count,
-			offset: self.models[model].offset,
+			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
 			center: self.models[model].center,
 			position: Mat4(mat4) * self.models[model].center,
@@ -1055,12 +1039,11 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].vertex_buffer,
+				self.models[model].shape.buffers.0,
 				self.texcoords[texcoords].vertex_buffer,
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].indice_count,
-			offset: self.models[model].offset,
+			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
 			center: self.models[model].center,
 			position: Mat4(mat4) * self.models[model].center,
@@ -1113,12 +1096,11 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].vertex_buffer,
+				self.models[model].shape.buffers.0,
 				self.texcoords[texcoords].vertex_buffer,
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].indice_count,
-			offset: self.models[model].offset,
+			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
 			center: self.models[model].center,
 			position: Mat4(mat4) * self.models[model].center,
@@ -1173,12 +1155,11 @@ impl Renderer {
 			instance,
 			num_buffers: 3,
 			buffers: [
-				self.models[model].vertex_buffer,
+				self.models[model].shape.buffers.0,
 				self.texcoords[texcoords].vertex_buffer,
 				self.gradients[colors].vertex_buffer
 			],
-			vertice_count: self.models[model].indice_count,
-			offset: self.models[model].offset,
+			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
 			center: self.models[model].center,
 			position: Mat4(mat4) * self.models[model].center,

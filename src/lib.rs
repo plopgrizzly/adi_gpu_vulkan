@@ -63,8 +63,8 @@ impl base::Display for Display {
 		self.renderer.camera();
 	}
 
-	fn model(&mut self, vertices: &[f32], indices: &[u32]) -> Model {
-		Model(self.renderer.model(vertices, indices))
+	fn model(&mut self, vertices: &[f32]) -> Model {
+		Model(self.renderer.model(vertices))
 	}
 
 	fn fog(&mut self, fog: Option<(f32, f32)>) -> () {
