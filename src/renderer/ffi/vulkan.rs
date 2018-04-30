@@ -10,10 +10,16 @@ impl Vulkan {
 	pub fn new(app_name: &str) -> Result<Self, String> {
 		let connection = unsafe { asi_vulkan::load(app_name) };
 
-		if connection.lib.is_null() {
-			return Err("Failed to link to Vulkan.".to_string());
-		}
+		if let Some(c) = connection {
+			if c.lib.is_null() {
+				return Err("Failed to link to Vulkan."
+					.to_string()
+				);
+			}
 
-		Ok(Vulkan(connection))
+			Ok(Vulkan(c))
+		} else {
+			Err("Couldn't find Vulkan".to_string())
+		}
 	}
 }

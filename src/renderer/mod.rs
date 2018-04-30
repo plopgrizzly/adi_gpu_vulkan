@@ -350,7 +350,9 @@ fn set_texture(connection: &Connection, vw: &mut Vw, texture: &mut Texture,
 }*/
 
 impl Vw {
-	pub fn new(window_name: &str, window_connection: WindowConnection) -> (Connection, Vw) {
+	pub fn new(window_name: &str, window_connection: WindowConnection)
+		-> Option<(Connection, Vw)>
+	{
 		let connection = ffi::vulkan::Vulkan::new(window_name).unwrap();
 
 		let instance = connection.0.vk;
@@ -404,7 +406,7 @@ impl Vw {
 
 		swapchain_resize(&connection.0, &mut vw);
 
-		(connection.0, vw)
+		Some((connection.0, vw))
 	}
 }
 
@@ -467,9 +469,9 @@ pub struct Renderer {
 
 impl Renderer {
 	pub fn new(window_name: &str, window_connection: WindowConnection,
-		clear_color: (f32, f32, f32)) -> Renderer
+		clear_color: (f32, f32, f32)) -> Option<Renderer>
 	{
-		let (connection, vw) = Vw::new(window_name, window_connection);
+		let (connection, vw) = Vw::new(window_name, window_connection)?;
 		let solid_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/solid-vert.spv"));
@@ -581,7 +583,7 @@ impl Renderer {
 
 		renderer.camera();
 
-		renderer
+		Some(renderer)
 	}
 
 	pub fn bg_color(&mut self, rgb: (f32, f32, f32)) {
