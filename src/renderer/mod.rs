@@ -353,7 +353,7 @@ impl Vw {
 	pub fn new(window_name: &str, window_connection: WindowConnection)
 		-> Option<(Connection, Vw)>
 	{
-		let connection = ffi::vulkan::Vulkan::new(window_name).unwrap();
+		let connection = ffi::vulkan::Vulkan::new(window_name)?;
 
 		let instance = connection.0.vk;
 		let surface = ffi::create_surface::create_surface(

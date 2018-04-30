@@ -7,19 +7,17 @@ use asi_vulkan;
 pub struct Vulkan(pub asi_vulkan::Connection);
 
 impl Vulkan {
-	pub fn new(app_name: &str) -> Result<Self, String> {
+	pub fn new(app_name: &str) -> Option<Self> {
 		let connection = unsafe { asi_vulkan::load(app_name) };
 
 		if let Some(c) = connection {
 			if c.lib.is_null() {
-				return Err("Failed to link to Vulkan."
-					.to_string()
-				);
+				None // Failed to link Vulkan
+			} else {
+				Some(Vulkan(c))
 			}
-
-			Ok(Vulkan(c))
 		} else {
-			Err("Couldn't find Vulkan".to_string())
+			None // Couldn't find Vulkan
 		}
 	}
 }
