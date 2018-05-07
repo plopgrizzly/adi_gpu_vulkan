@@ -36,7 +36,7 @@ exclude = [
 ]
 
 [dependencies]
-adi_gpu_base = { git = "https://github.com/PlopGrizzly/adi_gpu_base" } # "^0.4"
-asi_vulkan = { git = "https://github.com/PlopGrizzly/asi_vulkan" } # "^0.3"
-ami = { git = "https://github.com/PlopGrizzly/ami" } # "^0.6"
+adi_gpu_base = { path = "../adi_gpu_base" } # "^0.4"
+asi_vulkan = { path = "../asi_vulkan" } # "^0.3"
+ami = { path = "../ami" } # "^0.6"
 libc = "^0.2" # TODO: Remove dependency by having all ffi code in asi crates.
