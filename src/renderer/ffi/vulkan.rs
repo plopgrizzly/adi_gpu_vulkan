@@ -7,8 +7,8 @@ use asi_vulkan;
 pub struct Vulkan(pub asi_vulkan::Connection);
 
 impl Vulkan {
-	pub fn new(app_name: &str) -> Option<Self> {
-		let connection = unsafe { asi_vulkan::load(app_name) };
+	pub fn new() -> Option<Self> {
+		let connection = unsafe { asi_vulkan::load() };
 
 		if let Some(c) = connection {
 			if c.lib.is_null() {

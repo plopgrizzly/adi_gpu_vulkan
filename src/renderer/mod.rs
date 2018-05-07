@@ -350,10 +350,10 @@ fn set_texture(connection: &Connection, vw: &mut Vw, texture: &mut Texture,
 }*/
 
 impl Vw {
-	pub fn new(window_name: &str, window_connection: WindowConnection)
+	pub fn new(window_connection: WindowConnection)
 		-> Option<(Connection, Vw)>
 	{
-		let connection = ffi::vulkan::Vulkan::new(window_name)?;
+		let connection = ffi::vulkan::Vulkan::new()?;
 
 		let instance = connection.0.vk;
 		let surface = ffi::create_surface::create_surface(
@@ -468,10 +468,10 @@ pub struct Renderer {
 }
 
 impl Renderer {
-	pub fn new(window_name: &str, window_connection: WindowConnection,
+	pub fn new(window_connection: WindowConnection,
 		clear_color: (f32, f32, f32)) -> Option<Renderer>
 	{
-		let (connection, vw) = Vw::new(window_name, window_connection)?;
+		let (connection, vw) = Vw::new(window_connection)?;
 		let solid_vert = asi_vulkan::ShaderModule::new(&connection,
 			vw.device, include_bytes!(
 			"../shaders/res/solid-vert.spv"));

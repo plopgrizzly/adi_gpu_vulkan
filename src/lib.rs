@@ -37,8 +37,8 @@ impl base::Display for Display {
 	fn new<G: AsRef<Graphic>>(title: &str, icon: G) -> Option<Self> {
 		let window = adi_gpu_base::Window::new(title, icon.as_ref(),
 			None);
-		let renderer = renderer::Renderer::new("ADI Application",
-			window.get_connection(), (0.0, 0.0, 0.0))?;
+		let renderer = renderer::Renderer::new(window.get_connection(),
+			(0.0, 0.0, 0.0))?;
 
 		Some(Display { window, renderer })
 	}
