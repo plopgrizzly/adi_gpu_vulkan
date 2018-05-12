@@ -2,7 +2,7 @@
 // Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 // Licensed under the MIT LICENSE
 
-use std::mem;
+use std::{ mem };
 use libc::memcpy;
 
 pub mod vulkan;
@@ -11,6 +11,7 @@ pub mod create_surface;
 
 use asi_vulkan;
 use asi_vulkan::types::*;
+use asi_vulkan::Vk;
 
 /*pub struct VulkanRenderer {
 	native: vulkan::Vulkan,
@@ -28,7 +29,7 @@ impl ::RenderOps for VulkanRenderer {
 	}
 }*/
 
-pub fn copy_memory<T>(connection: &asi_vulkan::Connection, vk_device: VkDevice,
+pub fn copy_memory<T>(connection: &mut Vk, vk_device: VkDevice,
 	vk_memory: VkDeviceMemory, data: &T) where T: Clone
 {
 	let mapped : *mut T = unsafe {
@@ -45,9 +46,9 @@ pub fn copy_memory<T>(connection: &asi_vulkan::Connection, vk_device: VkDevice,
 	}
 }
 
-pub fn copy_memory_pitched<T>(connection: &asi_vulkan::Connection,
-	vk_device: VkDevice, vk_memory: VkDeviceMemory, data: &[T],
-	width: isize, height: isize, pitch: isize) where T: Clone
+pub fn copy_memory_pitched<T>(connection: &mut Vk, vk_device: VkDevice,
+	vk_memory: VkDeviceMemory, data: &[T], width: isize, height: isize,
+	pitch: isize) where T: Clone
 {
 	let mapped : *mut T = unsafe {
 		asi_vulkan::map_memory(connection, vk_device, vk_memory, !0)
@@ -72,8 +73,8 @@ pub fn copy_memory_pitched<T>(connection: &asi_vulkan::Connection,
 	}
 }
 
-pub fn cmd_draw(connection: &asi_vulkan::Connection,
-	cmd_buffer: VkCommandBuffer, vertex_count: u32)
+pub fn cmd_draw(connection: &mut Vk, cmd_buffer: VkCommandBuffer,
+	vertex_count: u32)
 {
 	unsafe {
 		asi_vulkan::cmd_draw(connection, cmd_buffer, vertex_count, 1, 0,

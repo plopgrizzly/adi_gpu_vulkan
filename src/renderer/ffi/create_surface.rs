@@ -7,20 +7,20 @@
 use adi_gpu_base::WindowConnection;
 
 use asi_vulkan;
-use asi_vulkan::types::*;
-use asi_vulkan::Connection;
+use asi_vulkan::Surface;
+use asi_vulkan::Vk;
 
-pub fn create_surface(c: &Connection, instance: VkInstance,
-	connection: WindowConnection) -> VkSurfaceKHR
+pub fn create_surface(c: &mut Vk, connection: WindowConnection)
+	-> Surface
 {
 	match connection {
 		WindowConnection::Xcb(connection,window) => {
-			asi_vulkan::create_surface_xcb(c, instance, connection, window)
+			asi_vulkan::Surface::new_xcb(c, connection, window)
 		}
 		WindowConnection::Wayland => panic!("Wayland Rendering Not Supported Yet"),
 		WindowConnection::DirectFB => panic!("DirectFB Rendering Not Supported Yet"),
 		WindowConnection::Windows(connection, window) => {
-			asi_vulkan::create_surface_windows(c, instance, connection, window)
+			asi_vulkan::Surface::new_windows(c, connection, window)
 		}
 		WindowConnection::Android => panic!("Android Rendering Not Supported Yet"),
 		WindowConnection::IOS => panic!("IOS Rendering Not Supported Yet"),

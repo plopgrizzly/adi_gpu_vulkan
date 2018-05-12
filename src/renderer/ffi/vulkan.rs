@@ -4,18 +4,14 @@
 
 use asi_vulkan;
 
-pub struct Vulkan(pub asi_vulkan::Connection);
+pub struct Vulkan(pub asi_vulkan::Vk);
 
 impl Vulkan {
 	pub fn new() -> Option<Self> {
-		let connection = unsafe { asi_vulkan::load() };
+		let connection = asi_vulkan::Vk::new();
 
 		if let Some(c) = connection {
-			if c.lib.is_null() {
-				None // Failed to link Vulkan
-			} else {
-				Some(Vulkan(c))
-			}
+			Some(Vulkan(c))
 		} else {
 			None // Couldn't find Vulkan
 		}
