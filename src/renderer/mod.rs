@@ -67,7 +67,6 @@ pub struct Vw {
 pub struct Texture {
 	mappable_image: Image,
 	image: Option<Image>,
-	sampler: VkSampler,
 	view: VkImageView,
 	pub(super) w: u32,
 	pub(super) h: u32,
@@ -274,10 +273,6 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 		None
 	};
 
-	let sampler = unsafe {
-		asi_vulkan::new_sampler(&mut vw.connection)
-	};
-
 	let view = unsafe {
 		asi_vulkan::create_imgview(&mut vw.connection,
 			image.as_ref().unwrap_or(&mappable_image),
@@ -288,7 +283,7 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 
 	Texture {
 		staged, mappable_image,	image, view, pitch: pitch as u32,
-		sampler, w: width, h: height,
+		w: width, h: height,
 	}
 }
 
@@ -446,19 +441,19 @@ impl Vw {
 			);
 		}
 
-		let vw = Vw {
+		// Finish connection with the texture sampler (TODO: in block2).
+		unsafe {
+			asi_vulkan::new_sampler(&mut connection);
+		}
+
+		Ok(Vw {
 			connection, present_queue, swapchain,
 			width, height, present_images, frame_buffers,
 			color_format, image_count, submit_fence,
 			present_image_views, ms_image, ms_image_view,
 			depth_image, depth_image_view, render_pass,
 			next_image_index: 0, present_mode,
-		};
-
-		// Finished building Vw
-		// swapchain_resize(&mut vw);
-
-		Ok(vw)
+		})
 	}
 }
 
@@ -895,7 +890,6 @@ impl Renderer {
 				&self.camera_memory, // TODO: at shader creation, not shape creation
 				&self.effect_memory,
 				texture.view,
-				texture.sampler,
 				true, // 1 texure
 			)
 		};
@@ -944,7 +938,6 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				&self.effect_memory,
-				mem::zeroed(),
 				mem::zeroed(),
 				false, // no texure
 			)
@@ -1000,7 +993,6 @@ impl Renderer {
 				&self.camera_memory,
 				&self.effect_memory,
 				mem::zeroed(),
-				mem::zeroed(),
 				false, // no texure
 			)
 		};
@@ -1052,7 +1044,6 @@ impl Renderer {
 				&self.camera_memory,
 				&self.effect_memory,
 				texture.view,
-				texture.sampler,
 				true, // 1 texure
 			)
 		};
@@ -1107,7 +1098,6 @@ impl Renderer {
 				&self.camera_memory,
 				&self.effect_memory,
 				texture.view,
-				texture.sampler,
 				true, // 1 texure
 			)
 		};
@@ -1164,7 +1154,6 @@ impl Renderer {
 				&self.camera_memory,
 				&self.effect_memory,
 				texture.view,
-				texture.sampler,
 				true, // 1 texure
 			)
 		};
