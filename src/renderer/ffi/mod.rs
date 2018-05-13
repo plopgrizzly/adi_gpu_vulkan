@@ -29,11 +29,11 @@ impl ::RenderOps for VulkanRenderer {
 	}
 }*/
 
-pub fn copy_memory<T>(connection: &mut Vk, vk_device: VkDevice,
-	vk_memory: VkDeviceMemory, data: &T) where T: Clone
+pub fn copy_memory<T>(connection: &mut Vk, vk_memory: VkDeviceMemory, data: &T)
+	where T: Clone
 {
 	let mapped : *mut T = unsafe {
-		asi_vulkan::map_memory(connection, vk_device, vk_memory, !0)
+		asi_vulkan::map_memory(connection, vk_memory, !0)
 	};
 
 	if mapped.is_null() {
@@ -42,16 +42,15 @@ pub fn copy_memory<T>(connection: &mut Vk, vk_device: VkDevice,
 
 	unsafe {
 		*mapped = data.clone();
-		asi_vulkan::unmap_memory(connection, vk_device, vk_memory);
+		asi_vulkan::unmap_memory(connection, vk_memory);
 	}
 }
 
-pub fn copy_memory_pitched<T>(connection: &mut Vk, vk_device: VkDevice,
-	vk_memory: VkDeviceMemory, data: &[T], width: isize, height: isize,
-	pitch: isize) where T: Clone
+pub fn copy_memory_pitched<T>(connection: &mut Vk, vk_memory: VkDeviceMemory,
+	data: &[T], width: isize, height: isize, pitch: isize) where T: Clone
 {
 	let mapped : *mut T = unsafe {
-		asi_vulkan::map_memory(connection, vk_device, vk_memory, !0)
+		asi_vulkan::map_memory(connection, vk_memory, !0)
 	};
 
 	if mapped.is_null() {
@@ -69,7 +68,7 @@ pub fn copy_memory_pitched<T>(connection: &mut Vk, vk_device: VkDevice,
 	}
 
 	unsafe {
-		asi_vulkan::unmap_memory(connection, vk_device, vk_memory);
+		asi_vulkan::unmap_memory(connection, vk_memory);
 	}
 }
 

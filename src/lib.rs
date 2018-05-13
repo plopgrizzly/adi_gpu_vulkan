@@ -34,13 +34,15 @@ pub struct Display {
 impl base::Display for Display {
 	type Texture = Texture;
 
-	fn new<G: AsRef<Graphic>>(title: &str, icon: G) -> Option<Self> {
+	fn new<G: AsRef<Graphic>>(title: &str, icon: G)
+		-> Result<Self, &'static str>
+	{
 		let window = adi_gpu_base::Window::new(title, icon.as_ref(),
 			None);
 		let renderer = renderer::Renderer::new(window.get_connection(),
 			(0.0, 0.0, 0.0))?;
 
-		Some(Display { window, renderer })
+		Ok(Display { window, renderer })
 	}
 
 	fn color(&mut self, color: (f32, f32, f32)) {
@@ -113,7 +115,7 @@ impl base::Display for Display {
 
 	#[inline(always)]
 	fn shape_texture(&mut self, model: &Model, transform: Mat4,
-		texture: Texture, tc: TexCoords, blending: bool,
+		texture: &Texture, tc: TexCoords, blending: bool,
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.textured(model.0, transform.0,
@@ -122,7 +124,7 @@ impl base::Display for Display {
 
 	#[inline(always)]
 	fn shape_faded(&mut self, model: &Model, transform: Mat4,
-		texture: Texture, tc: TexCoords, alpha: f32,
+		texture: &Texture, tc: TexCoords, alpha: f32,
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.faded(model.0, transform.0,
@@ -131,7 +133,7 @@ impl base::Display for Display {
 
 	#[inline(always)]
 	fn shape_tinted(&mut self, model: &Model, transform: Mat4,
-		texture: Texture, tc: TexCoords, tint: [f32; 4], blending: bool,
+		texture: &Texture, tc: TexCoords, tint: [f32; 4], blending: bool,
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.tinted(model.0, transform.0,
@@ -140,7 +142,7 @@ impl base::Display for Display {
 
 	#[inline(always)]
 	fn shape_complex(&mut self, model: &Model, transform: Mat4,
-		texture: Texture, tc: TexCoords, tints: Gradient,
+		texture: &Texture, tc: TexCoords, tints: Gradient,
 		blending: bool, fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.complex(model.0, transform.0,
