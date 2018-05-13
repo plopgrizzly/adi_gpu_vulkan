@@ -17,7 +17,7 @@ use asi_vulkan::Image;
 use asi_vulkan::TransformUniform;
 use asi_vulkan::FogUniform;
 use asi_vulkan::Style;
-use asi_vulkan::VwInstance;
+use asi_vulkan::Sprite;
 use asi_vulkan::Vk;
 
 use ami::Mat4;
@@ -79,7 +79,7 @@ pub struct Shape {
 	num_buffers: usize,
 	buffers: [VkBuffer; 3],
 	vertice_count: u32,
-	instance: VwInstance,
+	instance: Sprite,
 	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
 	center: ::ami::Vec3<f32>,
 	position: ::ami::Vec3<f32>,
@@ -472,7 +472,7 @@ fn draw_shape(connection: &mut Vk, shape: &Shape) {
 
 		asi_vulkan::cmd_bind_descsets(connection,
 			shape.instance.pipeline.pipeline_layout,
-			shape.instance.desc_set);
+			shape.instance.handles().0/*desc_set*/);
 	}
 
 	ffi::cmd_draw(connection, shape.vertice_count);
@@ -881,7 +881,7 @@ impl Renderer {
 
 		// Add an instance
 		let instance = unsafe {
-			asi_vulkan::vw_instance_new(
+			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
 					self.style_texture
@@ -930,7 +930,7 @@ impl Renderer {
 	{
 		// Add an instance
 		let instance = unsafe {
-			asi_vulkan::vw_instance_new(
+			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
 					self.style_solid
@@ -986,7 +986,7 @@ impl Renderer {
 
 		// Add an instance
 		let instance = unsafe {
-			asi_vulkan::vw_instance_new(
+			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
 					self.style_gradient
@@ -1041,7 +1041,7 @@ impl Renderer {
 
 		// Add an instance
 		let instance = unsafe {
-			asi_vulkan::vw_instance_new(
+			Sprite::new(
 				&mut self.vw.connection,
 				self.style_faded,
 				TransformAndFadeUniform {
@@ -1092,7 +1092,7 @@ impl Renderer {
 
 		// Add an instance
 		let instance = unsafe {
-			asi_vulkan::vw_instance_new(
+			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
 					self.style_tinted
@@ -1150,7 +1150,7 @@ impl Renderer {
 
 		// Add an instance
 		let instance = unsafe {
-			asi_vulkan::vw_instance_new(
+			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
 					self.style_complex
