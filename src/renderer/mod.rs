@@ -44,7 +44,6 @@ use ShapeHandle;
 pub struct Vw {
 	connection: Vk,
 	present_queue: VkQueue,
-	command_buffer: VkCommandBuffer,
 	swapchain: VkSwapchainKHR,
 	width:u32, height:u32, // Swapchain Dimensions.
 	present_images: [VkImage; 2], // 2 for double-buffering
@@ -183,14 +182,12 @@ fn swapchain_resize(vw: &mut Vw) {
 			vw.image_count,
 			&mut vw.present_images,
 			&mut vw.present_image_views,
-			vw.command_buffer,
 			vw.present_queue,
 		);
 
 		// Link Depth Buffer to swapchain
 		let (img, view) = asi_vulkan::create_depth_buffer(
 			&mut vw.connection,
-			vw.command_buffer,
 			vw.submit_fence,
 			vw.present_queue,
 			vw.width,
@@ -316,7 +313,7 @@ fn set_texture(vw: &mut Vw, texture: &mut Texture, rgba: &[u32]) {
 		// Copy data from linear image to optimal image.
 		unsafe {
 			asi_vulkan::copy_image(&mut vw.connection,
-				vw.command_buffer, &texture.mappable_image,
+				&texture.mappable_image,
 				texture.image.as_ref().unwrap(),
 				texture.w, texture.h
 			);
@@ -363,9 +360,10 @@ impl Vw {
 		let present_queue = unsafe {
 			asi_vulkan::create_queue(&mut connection)
 		};
-		let command_buffer = unsafe {
-			asi_vulkan::create_command_buffer(&mut connection)
-		}.0;
+		unsafe {
+			asi_vulkan::create_command_buffer(&mut connection);
+		}
+		// END BLOCK 2
 		let color_format = unsafe {
 			asi_vulkan::get_color_format(&mut connection)
 		};
@@ -405,7 +403,6 @@ impl Vw {
 				image_count,
 				&mut present_images,
 				&mut present_image_views,
-				command_buffer,
 				present_queue,
 			);
 		}
@@ -413,7 +410,6 @@ impl Vw {
 		let (depth_image, depth_image_view) = unsafe {
 			asi_vulkan::create_depth_buffer(
 				&mut connection,
-				command_buffer,
 				submit_fence,
 				present_queue,
 				width, height,
@@ -452,7 +448,7 @@ impl Vw {
 		}
 
 		let vw = Vw {
-			connection, present_queue, command_buffer, swapchain,
+			connection, present_queue, swapchain,
 			width, height, present_images, frame_buffers,
 			color_format, image_count, submit_fence,
 			present_image_views, ms_image, ms_image_view,
@@ -467,23 +463,20 @@ impl Vw {
 	}
 }
 
-fn draw_shape(connection: &mut Vk, cmdbuf: VkCommandBuffer, shape: &Shape) {
+fn draw_shape(connection: &mut Vk, shape: &Shape) {
 	unsafe {
 		asi_vulkan::cmd_bind_vb(connection,
-			cmdbuf,
 			&shape.buffers[..shape.num_buffers]);
 
 		asi_vulkan::cmd_bind_pipeline(connection,
-			cmdbuf,
 			shape.instance.pipeline.pipeline);
 
 		asi_vulkan::cmd_bind_descsets(connection,
-			cmdbuf,
 			shape.instance.pipeline.pipeline_layout,
 			shape.instance.desc_set);
 	}
 
-	ffi::cmd_draw(connection, cmdbuf, shape.vertice_count);
+	ffi::cmd_draw(connection, shape.vertice_count);
 }
 
 pub struct Renderer {
@@ -667,7 +660,6 @@ impl Renderer {
 			);
 
 			asi_vulkan::draw_begin(&mut self.vw.connection,
-				self.vw.command_buffer,
 				self.vw.render_pass,
 				self.vw.present_images[self.vw.next_image_index as usize],
 				self.vw.frame_buffers[self.vw.next_image_index as usize],
@@ -689,7 +681,7 @@ impl Renderer {
 
 			let shape = &self.opaque_octree[*id];
 
-			draw_shape(&mut self.vw.connection, self.vw.command_buffer, shape);
+			draw_shape(&mut self.vw.connection, shape);
 		}
 
 		self.alpha_octree.farthest(&mut self.alpha_sorted, frustum);
@@ -697,29 +689,26 @@ impl Renderer {
 //			println!("drawing alpha....");
 			let shape = &self.alpha_octree[*id];
 
-			draw_shape(&mut self.vw.connection, self.vw.command_buffer, shape);
+			draw_shape(&mut self.vw.connection, shape);
 		}
 
 		for shape in self.gui_vec.iter() {
 //			println!("drawing gui....");
-			draw_shape(&mut self.vw.connection, self.vw.command_buffer, shape);
+			draw_shape(&mut self.vw.connection, shape);
 		}
 
 		unsafe {
-			asi_vulkan::end_render_pass(&mut self.vw.connection,
-				self.vw.command_buffer);
+			asi_vulkan::end_render_pass(&mut self.vw.connection);
 
 			asi_vulkan::pipeline_barrier(&mut self.vw.connection,
-				self.vw.command_buffer,
 				self.vw.present_images[self.vw.next_image_index as usize]);
 
-			asi_vulkan::end_cmdbuff(&mut self.vw.connection,
-				self.vw.command_buffer);
+			asi_vulkan::end_cmdbuff(&mut self.vw.connection);
 
 			let fence = asi_vulkan::create_fence(&mut self.vw.connection);
 
 			asi_vulkan::queue_submit(&mut self.vw.connection,
-				self.vw.command_buffer, fence,
+				fence,
 				VkPipelineStage::BottomOfPipe,
 				self.vw.present_queue,
 				Some(rendering_complete_sem));
