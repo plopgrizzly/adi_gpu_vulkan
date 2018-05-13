@@ -75,7 +75,6 @@ pub struct Texture {
 	staged: bool,
 }
 
-#[derive(Clone)]
 pub struct Shape {
 	num_buffers: usize,
 	buffers: [VkBuffer; 3],
@@ -1201,22 +1200,20 @@ impl Renderer {
 
 		match *shape {
 			ShapeHandle::Opaque(ref mut x) => {
-				let mut shape = self.opaque_octree[*x].clone();
-
-				shape.position = transform *
+				self.opaque_octree[*x].position = transform *
 					self.opaque_octree[*x].center;
-				self.opaque_octree.modify(x, shape);
+				let shape = self.opaque_octree.remove(*x);
+				*x = self.opaque_octree.add(shape);
 
 				ffi::copy_memory(&mut self.vw.connection,
 					self.opaque_octree[*x].instance.uniform_memory,
 					&uniform);
 			},
 			ShapeHandle::Alpha(ref mut x) => {
-				let mut shape = self.alpha_octree[*x].clone();
-
-				shape.position = transform *
+				self.alpha_octree[*x].position = transform *
 					self.alpha_octree[*x].center;
-				self.alpha_octree.modify(x, shape);
+				let shape = self.alpha_octree.remove(*x);
+				*x = self.alpha_octree.add(shape);
 
 				ffi::copy_memory(&mut self.vw.connection,
 					self.alpha_octree[*x].instance.uniform_memory,
@@ -1224,9 +1221,8 @@ impl Renderer {
 			},
 			ShapeHandle::Gui(x) => {
 				let x = x as usize; // for indexing
-				let mut shape = self.gui_vec[x].clone();
 
-				shape.position = transform *
+				self.gui_vec[x].position = transform *
 					self.gui_vec[x].center;
 
 				ffi::copy_memory(&mut self.vw.connection,
