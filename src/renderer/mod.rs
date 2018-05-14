@@ -12,11 +12,11 @@ mod ffi;
 use asi_vulkan;
 use asi_vulkan::types::*;
 use asi_vulkan::Image;
+use asi_vulkan::Style;
 
 // TODO
 use asi_vulkan::TransformUniform;
 use asi_vulkan::FogUniform;
-use asi_vulkan::Style;
 use asi_vulkan::Sprite;
 use asi_vulkan::Vk;
 
@@ -463,10 +463,10 @@ fn draw_shape(connection: &mut Vk, shape: &Shape) {
 			&shape.buffers[..shape.num_buffers]);
 
 		asi_vulkan::cmd_bind_pipeline(connection,
-			shape.instance.pipeline.pipeline);
+			shape.instance.pipeline);
 
 		asi_vulkan::cmd_bind_descsets(connection,
-			shape.instance.pipeline.pipeline_layout,
+			shape.instance.pipeline_layout,
 			shape.instance.handles().0/*desc_set*/);
 	}
 
@@ -550,37 +550,37 @@ impl Renderer {
 		let complex_frag = asi_vulkan::ShaderModule::new(
 			&mut vw.connection, include_bytes!(
 			"../shaders/res/gradient-frag.spv"));
-		let style_solid = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_solid = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&solid_vert, &solid_frag, 0, 1, true);
-		let style_nasolid = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_nasolid = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&solid_vert, &solid_frag, 0, 1, false);
-		let style_texture = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_texture = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&texture_vert, &texture_frag, 1, 2, true);
-		let style_natexture = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_natexture = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&texture_vert, &texture_frag, 1, 2, false);
-		let style_gradient = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_gradient = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&gradient_vert, &gradient_frag, 0, 2, true);
-		let style_nagradient = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_nagradient = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&gradient_vert, &gradient_frag, 0, 2, false);
-		let style_faded = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_faded = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&faded_vert, &faded_frag, 1, 2, true);
-		let style_tinted = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_tinted = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&tinted_vert, &tinted_frag, 1, 2, true);
-		let style_natinted = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_natinted = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&tinted_vert, &tinted_frag, 1, 2, false);
-		let style_complex = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_complex = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&complex_vert, &complex_frag, 1, 3, true);
-		let style_nacomplex = asi_vulkan::new_pipeline(&mut vw.connection,
+		let style_nacomplex = Style::new(&mut vw.connection,
 			vw.render_pass, vw.width, vw.height,
 			&complex_vert, &complex_frag, 1, 3, false);
 
@@ -879,9 +879,9 @@ impl Renderer {
 			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
-					self.style_texture
+					&self.style_texture
 				} else {
-					self.style_natexture
+					&self.style_natexture
 				},
 				TransformFullUniform {
 					mat4,
@@ -927,9 +927,9 @@ impl Renderer {
 			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
-					self.style_solid
+					&self.style_solid
 				} else {
-					self.style_nasolid
+					&self.style_nasolid
 				},
 				TransformAndColorUniform {
 					vec4: color,
@@ -982,9 +982,9 @@ impl Renderer {
 			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
-					self.style_gradient
+					&self.style_gradient
 				} else {
-					self.style_nagradient
+					&self.style_nagradient
 				},
 				TransformFullUniform {
 					mat4,
@@ -1035,7 +1035,7 @@ impl Renderer {
 		let instance = unsafe {
 			Sprite::new(
 				&mut self.vw.connection,
-				self.style_faded,
+				&self.style_faded,
 				TransformAndFadeUniform {
 					mat4,
 					hcam: fog as u32 + camera as u32,
@@ -1086,9 +1086,9 @@ impl Renderer {
 			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
-					self.style_tinted
+					&self.style_tinted
 				} else {
-					self.style_natinted
+					&self.style_natinted
 				},
 				TransformAndColorUniform {
 					mat4,
@@ -1143,9 +1143,9 @@ impl Renderer {
 			Sprite::new(
 				&mut self.vw.connection,
 				if alpha {
-					self.style_complex
+					&self.style_complex
 				} else {
-					self.style_nacomplex
+					&self.style_nacomplex
 				},
 				TransformFullUniform {
 					mat4,
