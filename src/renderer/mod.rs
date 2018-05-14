@@ -53,9 +53,7 @@ pub struct Vw {
 	submit_fence: VkFence, // The submit fence
 	present_image_views: [VkImageView; 2], // 2 for double-buffering
 	ms_image: Image,
-	ms_image_view: VkImageView,
 	depth_image: Image,
-	depth_image_view: VkImageView,
 	render_pass: VkRenderPass,
 	next_image_index: u32,
 	// TODO: Remove?
@@ -67,7 +65,7 @@ pub struct Vw {
 pub struct Texture {
 	mappable_image: Image,
 	image: Option<Image>,
-	view: VkImageView,
+//	view: VkImageView,
 	pub(super) w: u32,
 	pub(super) h: u32,
 	pitch: u32,
@@ -184,7 +182,7 @@ fn swapchain_resize(vw: &mut Vw) {
 		);
 
 		// Link Depth Buffer to swapchain
-		let (img, view) = asi_vulkan::create_depth_buffer(
+		let img = asi_vulkan::create_depth_buffer(
 			&mut vw.connection,
 			vw.submit_fence,
 			vw.present_queue,
@@ -192,19 +190,19 @@ fn swapchain_resize(vw: &mut Vw) {
 			vw.height,
 		);
 
+		println!("depth2 {:x}", img.view());
 		vw.depth_image = img;
-		vw.depth_image_view = view;
 
 		// Create multisampling buffer
-		let (img, view) = asi_vulkan::create_ms_buffer(
+		let img = asi_vulkan::create_ms_buffer(
 			&mut vw.connection,
 			&vw.color_format,
 			vw.width,
 			vw.height,
 		);
 
+		println!("ms2 {:x}", img.view());
 		vw.ms_image = img;
-		vw.ms_image_view = view;
 
 		// Link Render Pass to swapchain
 		vw.render_pass = asi_vulkan::create_render_pass(
@@ -218,8 +216,8 @@ fn swapchain_resize(vw: &mut Vw) {
 			vw.image_count,
 			vw.render_pass,
 			&vw.present_image_views,
-			vw.ms_image_view,
-			vw.depth_image_view,
+			&vw.ms_image,
+			&vw.depth_image,
 			vw.width,
 			vw.height,
 			&mut vw.frame_buffers,
@@ -233,7 +231,6 @@ fn swapchain_delete(vw: &mut Vw) {
 			&mut vw.connection,
 			&vw.frame_buffers,
 			&vw.present_image_views,
-			vw.depth_image_view,
 			vw.render_pass,
 			vw.image_count,
 			vw.swapchain,
@@ -273,16 +270,18 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 		None
 	};
 
-	let view = unsafe {
+/*	let view = unsafe {
 		asi_vulkan::create_imgview(&mut vw.connection,
 			image.as_ref().unwrap_or(&mappable_image),
 			VkFormat::R8g8b8a8Srgb,
 			true
 		)
-	};
+	};*/
+
+	println!("Texture: {:x}", image.as_ref().unwrap_or(&mappable_image).view());
 
 	Texture {
-		staged, mappable_image,	image, view, pitch: pitch as u32,
+		staged, mappable_image,	image, pitch: pitch as u32,
 		w: width, h: height,
 	}
 }
@@ -401,7 +400,7 @@ impl Vw {
 			);
 		}
 		// Link Depth Buffer to swapchain
-		let (depth_image, depth_image_view) = unsafe {
+		let depth_image = unsafe {
 			asi_vulkan::create_depth_buffer(
 				&mut connection,
 				submit_fence,
@@ -409,15 +408,18 @@ impl Vw {
 				width, height,
 			)
 		};
+		println!("depth {:x}", depth_image.view());
 
 		// Create multisampling buffer
-		let (ms_image, ms_image_view) = unsafe {
+		let ms_image = unsafe {
 			asi_vulkan::create_ms_buffer(
 				&mut connection,
 				&color_format,
 				width, height,
 			)
 		};
+
+		println!("ms {:x}", ms_image.view());
 
 		// Link Render Pass to swapchain
 		let render_pass = unsafe {
@@ -434,8 +436,8 @@ impl Vw {
 				image_count,
 				render_pass,
 				&present_image_views,
-				ms_image_view,
-				depth_image_view,
+				&ms_image,
+				&depth_image,
 				width, height,
 				&mut frame_buffers,
 			);
@@ -450,8 +452,7 @@ impl Vw {
 			connection, present_queue, swapchain,
 			width, height, present_images, frame_buffers,
 			color_format, image_count, submit_fence,
-			present_image_views, ms_image, ms_image_view,
-			depth_image, depth_image_view, render_pass,
+			present_image_views, ms_image, depth_image, render_pass,
 			next_image_index: 0, present_mode,
 		})
 	}
@@ -889,7 +890,8 @@ impl Renderer {
 				},
 				&self.camera_memory, // TODO: at shader creation, not shape creation
 				&self.effect_memory,
-				texture.view,
+				texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image),
 				true, // 1 texure
 			)
 		};
@@ -1043,7 +1045,8 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				&self.effect_memory,
-				texture.view,
+				texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image),
 				true, // 1 texure
 			)
 		};
@@ -1097,7 +1100,8 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				&self.effect_memory,
-				texture.view,
+				texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image),
 				true, // 1 texure
 			)
 		};
@@ -1153,7 +1157,8 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				&self.effect_memory,
-				texture.view,
+				texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image),
 				true, // 1 texure
 			)
 		};
