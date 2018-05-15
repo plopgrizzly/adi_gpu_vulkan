@@ -13,6 +13,7 @@ use asi_vulkan;
 use asi_vulkan::types::*;
 use asi_vulkan::Image;
 use asi_vulkan::Style;
+use asi_vulkan::Buffer;
 
 // TODO
 use asi_vulkan::TransformUniform;
@@ -83,23 +84,19 @@ pub struct Shape {
 }
 
 pub struct Model {
-	shape: asi_vulkan::Shape,
+	shape: asi_vulkan::Buffer,
 	vertex_count: u32,
 	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
 	center: ::ami::Vec3<f32>,
 }
 
 pub struct TexCoords {
-	vertex_buffer: VkBuffer,
-	#[allow(unused)] // TODO: Use for freeing
-	vertex_memory: VkDeviceMemory,
+	vertex_buffer: Buffer,
 	vertex_count: u32,
 }
 
 pub struct Gradient {
-	vertex_buffer: VkBuffer,
-	#[allow(unused)] // TODO: Use for freeing
-	vertex_memory: VkDeviceMemory,
+	vertex_buffer: Buffer,
 	vertex_count: u32,
 }
 
@@ -762,10 +759,10 @@ impl Renderer {
 
 	/// Push a model (collection of vertices) into graphics memory.
 	pub fn model(&mut self, vertices: &[f32]) -> usize {
-		let shape = asi_vulkan::Shape::new(
-			&mut self.vw.connection,
-			vertices,
-		);
+		let shape = unsafe {
+			asi_vulkan::new_buffer(&mut self.vw.connection,
+				vertices)
+		};
 
 		let a = self.models.len();
 
@@ -827,7 +824,7 @@ impl Renderer {
 	/// Push texture coordinates (collection of vertices) into graphics
 	/// memory.
 	pub fn texcoords(&mut self, texcoords: &[f32]) -> usize {
-		let (vertex_buffer, vertex_memory) = unsafe {
+		let vertex_buffer = unsafe {
 			asi_vulkan::new_buffer(
 				&mut self.vw.connection,
 				texcoords,
@@ -838,7 +835,6 @@ impl Renderer {
 
 		self.texcoords.push(TexCoords {
 			vertex_buffer,
-			vertex_memory,
 			vertex_count: texcoords.len() as u32 / 4,
 		});
 
@@ -847,7 +843,7 @@ impl Renderer {
 
 	/// Push colors per vertex into graphics memory.
 	pub fn colors(&mut self, colors: &[f32]) -> usize {
-		let (vertex_buffer, vertex_memory) = unsafe {
+		let vertex_buffer = unsafe {
 			asi_vulkan::new_buffer(
 				&mut self.vw.connection,
 				colors,
@@ -858,7 +854,6 @@ impl Renderer {
 
 		self.gradients.push(Gradient {
 			vertex_buffer,
-			vertex_memory,
 			vertex_count: colors.len() as u32 / 4,
 		});
 
@@ -900,8 +895,8 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].shape.buffers.0,
-				self.texcoords[texcoords].vertex_buffer,
+				self.models[model].shape.buffer(),
+				self.texcoords[texcoords].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
 			vertice_count: self.models[model].vertex_count,
@@ -949,7 +944,7 @@ impl Renderer {
 			instance,
 			num_buffers: 1,
 			buffers: [
-				self.models[model].shape.buffers.0,
+				self.models[model].shape.buffer(),
 				unsafe { mem::uninitialized() },
 				unsafe { mem::uninitialized() }
 			],
@@ -1003,8 +998,8 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].shape.buffers.0,
-				self.gradients[colors].vertex_buffer,
+				self.models[model].shape.buffer(),
+				self.gradients[colors].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
 			vertice_count: self.models[model].vertex_count,
@@ -1055,8 +1050,8 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].shape.buffers.0,
-				self.texcoords[texcoords].vertex_buffer,
+				self.models[model].shape.buffer(),
+				self.texcoords[texcoords].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
 			vertice_count: self.models[model].vertex_count,
@@ -1110,8 +1105,8 @@ impl Renderer {
 			instance,
 			num_buffers: 2,
 			buffers: [
-				self.models[model].shape.buffers.0,
-				self.texcoords[texcoords].vertex_buffer,
+				self.models[model].shape.buffer(),
+				self.texcoords[texcoords].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
 			vertice_count: self.models[model].vertex_count,
@@ -1167,9 +1162,9 @@ impl Renderer {
 			instance,
 			num_buffers: 3,
 			buffers: [
-				self.models[model].shape.buffers.0,
-				self.texcoords[texcoords].vertex_buffer,
-				self.gradients[colors].vertex_buffer
+				self.models[model].shape.buffer(),
+				self.texcoords[texcoords].vertex_buffer.buffer(),
+				self.gradients[colors].vertex_buffer.buffer(),
 			],
 			vertice_count: self.models[model].vertex_count,
 			bounds: self.models[model].bounds,
@@ -1200,7 +1195,7 @@ impl Renderer {
 				*x = self.opaque_octree.add(shape);
 
 				ffi::copy_memory(&mut self.vw.connection,
-					self.opaque_octree[*x].instance.uniform_memory,
+					self.opaque_octree[*x].instance.uniform_memory.memory(),
 					&uniform);
 			},
 			ShapeHandle::Alpha(ref mut x) => {
@@ -1210,7 +1205,7 @@ impl Renderer {
 				*x = self.alpha_octree.add(shape);
 
 				ffi::copy_memory(&mut self.vw.connection,
-					self.alpha_octree[*x].instance.uniform_memory,
+					self.alpha_octree[*x].instance.uniform_memory.memory(),
 					&uniform);
 			},
 			ShapeHandle::Gui(x) => {
@@ -1220,7 +1215,7 @@ impl Renderer {
 					self.gui_vec[x].center;
 
 				ffi::copy_memory(&mut self.vw.connection,
-					self.gui_vec[x].instance.uniform_memory,
+					self.gui_vec[x].instance.uniform_memory.memory(),
 					&uniform);
 			},
 		}
