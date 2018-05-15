@@ -1,7 +1,6 @@
-// lib.rs -- Aldaron's Device Interface / GPU / Vulkan
-// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
-// Licensed under the MIT LICENSE
-
+// "adi_gpu_vulkan" crate - Licensed under the MIT LICENSE
+//  * Copyright (c) 2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
+//
 //! Vulkan implementation for adi_gpu.
 
 // #![no_std]
@@ -19,7 +18,7 @@ pub use base::Shape;
 pub use base::Gradient;
 pub use base::Model;
 pub use base::TexCoords;
-pub use renderer::Texture;
+pub use base::Texture;
 
 use ami::*;
 use adi_gpu_base as base;
@@ -31,20 +30,18 @@ pub struct Display {
 	renderer: renderer::Renderer,
 }
 
+pub fn new<G: AsRef<Graphic>>(title: &str, icon: G)
+	-> Result<Box<Display>, &'static str>
+{
+	let window = adi_gpu_base::Window::new(title, icon.as_ref(),
+		None);
+	let renderer = renderer::Renderer::new(window.get_connection(),
+		(0.0, 0.0, 0.0))?;
+
+	Ok(Box::new(Display { window, renderer }))
+}
+
 impl base::Display for Display {
-	type Texture = Texture;
-
-	fn new<G: AsRef<Graphic>>(title: &str, icon: G)
-		-> Result<Self, &'static str>
-	{
-		let window = adi_gpu_base::Window::new(title, icon.as_ref(),
-			None);
-		let renderer = renderer::Renderer::new(window.get_connection(),
-			(0.0, 0.0, 0.0))?;
-
-		Ok(Display { window, renderer })
-	}
-
 	fn color(&mut self, color: (f32, f32, f32)) {
 		self.renderer.bg_color(color);
 	}
@@ -77,10 +74,10 @@ impl base::Display for Display {
 		}
 	}
 
-	fn texture<G: AsRef<Graphic>>(&mut self, graphic: G) -> Texture {
+	fn texture(&mut self, graphic: &Graphic) -> Texture {
 		let (w, h, pixels) = graphic.as_ref().as_slice();
 
-		self.renderer.texture(w, h, pixels)
+		Texture(self.renderer.texture(w, h, pixels))
 	}
 
 	fn gradient(&mut self, colors: &[f32]) -> Gradient {
@@ -91,8 +88,8 @@ impl base::Display for Display {
 		TexCoords(self.renderer.texcoords(texcoords))
 	}
 
-	fn set_texture(&mut self, texture: &mut Self::Texture, pixels: &[u32]) {
-		self.renderer.set_texture(texture, pixels);
+	fn set_texture(&mut self, texture: &mut Texture, pixels: &[u32]) {
+		self.renderer.set_texture(texture.0, pixels);
 	}
 
 	#[inline(always)]
@@ -119,7 +116,7 @@ impl base::Display for Display {
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.textured(model.0, transform.0,
-			texture, tc.0, blending, fog, camera))
+			texture.0, tc.0, blending, fog, camera))
 	}
 
 	#[inline(always)]
@@ -128,7 +125,7 @@ impl base::Display for Display {
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.faded(model.0, transform.0,
-			texture, tc.0, alpha, fog, camera))
+			texture.0, tc.0, alpha, fog, camera))
 	}
 
 	#[inline(always)]
@@ -137,7 +134,7 @@ impl base::Display for Display {
 		fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.tinted(model.0, transform.0,
-			texture, tc.0, tint, blending, fog, camera))
+			texture.0, tc.0, tint, blending, fog, camera))
 	}
 
 	#[inline(always)]
@@ -146,7 +143,7 @@ impl base::Display for Display {
 		blending: bool, fog: bool, camera: bool) -> Shape
 	{
 		base::new_shape(self.renderer.complex(model.0, transform.0,
-			texture, tc.0, tints.0, blending, fog, camera))
+			texture.0, tc.0, tints.0, blending, fog, camera))
 	}
 
 	fn transform(&mut self, shape: &mut Shape, transform: Mat4) {
@@ -159,12 +156,5 @@ impl base::Display for Display {
 
 	fn wh(&self) -> (u32, u32) {
 		self.window.wh()
-	}
-}
-
-impl base::Texture for Texture {
-	/// Get the width and height.
-	fn wh(&self) -> (u32, u32) {
-		(self.w, self.h)
 	}
 }

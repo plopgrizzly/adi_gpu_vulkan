@@ -1,6 +1,5 @@
-// shaders/gradient-vert.glsl -- Aldaron's Device Interface / GPU / Vulkan
-// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
-// Licensed under the MIT LICENSE
+// "adi_gpu_vulkan" crate - Licensed under the MIT LICENSE
+//  * Copyright (c) 2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 
 #version 450
 #extension GL_ARB_separate_shader_objects : enable

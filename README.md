@@ -1,4 +1,4 @@
-# adi_gpu_vulkan 0.3
+# Aldaron's Device Interface / GPU / Vulkan
 Vulkan implementation for adi_gpu
 
 [Cargo](https://crates.io/crates/adi_gpu_vulkan) /

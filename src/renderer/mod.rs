@@ -1,6 +1,5 @@
-// renderer/mod.rs -- Aldaron's Device Interface / GPU / Vulkan
-// Copyright (c) 2017-2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
-// Licensed under the MIT LICENSE
+// "adi_gpu_vulkan" crate - Licensed under the MIT LICENSE
+//  * Copyright (c) 2018  Jeron A. Lau <jeron.lau@plopgrizzly.com>
 
 use std::{ mem };
 
@@ -57,8 +56,6 @@ pub struct Vw {
 	depth_image: Image,
 	render_pass: VkRenderPass,
 	next_image_index: u32,
-	// TODO: Remove?
-//	offsets: u64, // VkDeviceSize
 	present_mode: VkPresentModeKHR,
 }
 
@@ -78,6 +75,7 @@ pub struct Shape {
 	buffers: [VkBuffer; 3],
 	vertice_count: u32,
 	instance: Sprite,
+	#[allow(dead_code)] // TODO bounds used in octree.
 	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
 	center: ::ami::Vec3<f32>,
 	position: ::ami::Vec3<f32>,
@@ -186,7 +184,6 @@ fn swapchain_resize(vw: &mut Vw) {
 			vw.height,
 		);
 
-		println!("depth2 {:x}", img.view());
 		vw.depth_image = img;
 
 		// Create multisampling buffer
@@ -197,7 +194,6 @@ fn swapchain_resize(vw: &mut Vw) {
 			vw.height,
 		);
 
-		println!("ms2 {:x}", img.view());
 		vw.ms_image = img;
 
 		// Link Render Pass to swapchain
@@ -273,8 +269,6 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 			true
 		)
 	};*/
-
-	println!("Texture: {:x}", image.as_ref().unwrap_or(&mappable_image).view());
 
 	Texture {
 		staged, mappable_image,	image, pitch: pitch as u32,
@@ -404,7 +398,6 @@ impl Vw {
 				width, height,
 			)
 		};
-		println!("depth {:x}", depth_image.view());
 
 		// Create multisampling buffer
 		let ms_image = unsafe {
@@ -414,8 +407,6 @@ impl Vw {
 				width, height,
 			)
 		};
-
-		println!("ms {:x}", ms_image.view());
 
 		// Link Render Pass to swapchain
 		let render_pass = unsafe {
@@ -485,6 +476,7 @@ pub struct Renderer {
 	models: Vec<Model>,
 	texcoords: Vec<TexCoords>,
 	gradients: Vec<Gradient>,
+	textures: Vec<Texture>,
 	style_solid: Style,
 	style_nasolid: Style,
 	style_texture: Style,
@@ -604,6 +596,7 @@ impl Renderer {
 			gradients: Vec::new(),
 			models: Vec::new(),
 			texcoords: Vec::new(),
+			textures: Vec::new(),
 			style_solid, style_nasolid,
 			style_texture, style_natexture,
 			style_gradient, style_nagradient,
@@ -743,17 +736,19 @@ impl Renderer {
 	}
 
 	pub fn texture(&mut self, width: u32, height: u32, rgba: &[u32])
-		-> Texture
+		-> usize
 	{
 		let mut texture = new_texture(&mut self.vw, width, height);
 
 		set_texture(&mut self.vw, &mut texture, rgba);
 
-		texture
+		let a = self.textures.len();
+		self.textures.push(texture);
+		a
 	}
 
-	pub fn set_texture(&mut self, texture: &mut Texture, rgba: &[u32]) {
-		set_texture(&mut self.vw, texture, rgba);
+	pub fn set_texture(&mut self, texture: usize, rgba: &[u32]) {
+		set_texture(&mut self.vw, &mut self.textures[texture], rgba);
 	}
 
 	/// Push a model (collection of vertices) into graphics memory.
@@ -860,7 +855,7 @@ impl Renderer {
 	}
 
 	pub fn textured(&mut self, model: usize, mat4: [f32; 16],
-		texture: &Texture, texcoords: usize, alpha: bool,
+		texture: usize, texcoords: usize, alpha: bool,
 		fog: bool, camera: bool) -> ShapeHandle
 	{
 		if self.models[model].vertex_count
@@ -884,8 +879,9 @@ impl Renderer {
 				},
 				&self.camera_memory, // TODO: at shader creation, not shape creation
 				Some(&self.effect_memory),
-				Some(texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image)),
+				Some(self.textures[texture].image.as_ref()
+					.unwrap_or(&self.textures[texture]
+						.mappable_image)),
 				true, // 1 texure
 			)
 		};
@@ -918,8 +914,6 @@ impl Renderer {
 		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
-		println!("km");
-
 		// Add an instance
 		let instance = unsafe {
 			Sprite::new(
@@ -940,8 +934,6 @@ impl Renderer {
 				false, // no texure
 			)
 		};
-
-		println!("kmz");
 
 		let shape = Shape {
 			instance,
@@ -1021,7 +1013,7 @@ impl Renderer {
 		}
 	}
 
-	pub fn faded(&mut self, model: usize, mat4: [f32; 16], texture: &Texture,
+	pub fn faded(&mut self, model: usize, mat4: [f32; 16], texture: usize,
 		texcoords: usize, fade_factor: f32, fog: bool,
 		camera: bool) -> ShapeHandle
 	{
@@ -1043,8 +1035,9 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				Some(&self.effect_memory),
-				Some(texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image)),
+				Some(self.textures[texture].image.as_ref()
+					.unwrap_or(&self.textures[texture]
+						.mappable_image)),
 				true, // 1 texure
 			)
 		};
@@ -1072,7 +1065,7 @@ impl Renderer {
 	}
 
 	pub fn tinted(&mut self, model: usize, mat4: [f32; 16],
-		texture: &Texture, texcoords: usize, color: [f32; 4],
+		texture: usize, texcoords: usize, color: [f32; 4],
 		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
@@ -1098,8 +1091,9 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				Some(&self.effect_memory),
-				Some(texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image)),
+				Some(self.textures[texture].image.as_ref()
+					.unwrap_or(&self.textures[texture]
+						.mappable_image)),
 				true, // 1 texure
 			)
 		};
@@ -1129,7 +1123,7 @@ impl Renderer {
 	}
 
 	pub fn complex(&mut self, model: usize, mat4: [f32; 16],
-		texture: &Texture, texcoords: usize, colors: usize, alpha: bool,
+		texture: usize, texcoords: usize, colors: usize, alpha: bool,
 		fog: bool, camera: bool) -> ShapeHandle
 	{
 		if self.models[model].vertex_count
@@ -1155,8 +1149,9 @@ impl Renderer {
 				},
 				&self.camera_memory,
 				Some(&self.effect_memory),
-				Some(texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image)),
+				Some(self.textures[texture].image.as_ref()
+					.unwrap_or(&self.textures[texture]
+						.mappable_image)),
 				true, // 1 texure
 			)
 		};
