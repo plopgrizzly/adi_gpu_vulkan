@@ -883,9 +883,9 @@ impl Renderer {
 					hcam: fog as u32 + camera as u32,
 				},
 				&self.camera_memory, // TODO: at shader creation, not shape creation
-				&self.effect_memory,
-				texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image),
+				Some(&self.effect_memory),
+				Some(texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image)),
 				true, // 1 texure
 			)
 		};
@@ -918,6 +918,8 @@ impl Renderer {
 		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
+		println!("km");
+
 		// Add an instance
 		let instance = unsafe {
 			Sprite::new(
@@ -933,11 +935,13 @@ impl Renderer {
 					mat4,
 				},
 				&self.camera_memory,
-				&self.effect_memory,
-				mem::zeroed(),
+				Some(&self.effect_memory),
+				None,
 				false, // no texure
 			)
 		};
+
+		println!("kmz");
 
 		let shape = Shape {
 			instance,
@@ -987,8 +991,8 @@ impl Renderer {
 					hcam: fog as u32 + camera as u32,
 				},
 				&self.camera_memory,
-				&self.effect_memory,
-				mem::zeroed(),
+				Some(&self.effect_memory),
+				None,
 				false, // no texure
 			)
 		};
@@ -1038,9 +1042,9 @@ impl Renderer {
 					fade: fade_factor,
 				},
 				&self.camera_memory,
-				&self.effect_memory,
-				texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image),
+				Some(&self.effect_memory),
+				Some(texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image)),
 				true, // 1 texure
 			)
 		};
@@ -1093,9 +1097,9 @@ impl Renderer {
 					vec4: color,
 				},
 				&self.camera_memory,
-				&self.effect_memory,
-				texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image),
+				Some(&self.effect_memory),
+				Some(texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image)),
 				true, // 1 texure
 			)
 		};
@@ -1150,9 +1154,9 @@ impl Renderer {
 					hcam: fog as u32 + camera as u32,
 				},
 				&self.camera_memory,
-				&self.effect_memory,
-				texture.image.as_ref()
-					.unwrap_or(&texture.mappable_image),
+				Some(&self.effect_memory),
+				Some(texture.image.as_ref()
+					.unwrap_or(&texture.mappable_image)),
 				true, // 1 texure
 			)
 		};
