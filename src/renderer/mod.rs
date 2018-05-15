@@ -51,7 +51,7 @@ pub struct Vw {
 	frame_buffers: [VkFramebuffer; 2], // 2 for double-buffering
 	color_format: VkFormat,
 	image_count: u32, // 1 (single-buffering) or 2 (double-buffering)
-	submit_fence: VkFence, // The submit fence
+	submit_fence: asi_vulkan::Fence, // The submit fence
 	present_image_views: [VkImageView; 2], // 2 for double-buffering
 	ms_image: Image,
 	depth_image: Image,
@@ -168,10 +168,9 @@ fn swapchain_resize(vw: &mut Vw) {
 			&mut vw.present_images[0]);
 
 		// Link Image Views for each framebuffer
-		asi_vulkan::create_image_view(
+		vw.submit_fence = asi_vulkan::create_image_view(
 			&mut vw.connection,
 			&vw.color_format,
-			&mut vw.submit_fence,
 			vw.image_count,
 			&mut vw.present_images,
 			&mut vw.present_image_views,
@@ -181,7 +180,7 @@ fn swapchain_resize(vw: &mut Vw) {
 		// Link Depth Buffer to swapchain
 		let img = asi_vulkan::create_depth_buffer(
 			&mut vw.connection,
-			vw.submit_fence,
+			&vw.submit_fence,
 			vw.present_queue,
 			vw.width,
 			vw.height,
@@ -369,7 +368,6 @@ impl Vw {
 		let mut present_image_views = [unsafe { mem::zeroed() }; 2];
 		let mut frame_buffers: [VkFramebuffer; 2]
 			= unsafe { mem::uninitialized() };
-		let mut submit_fence = unsafe { mem::zeroed() };
 		let width = 640; // TODO w
 		let height = 360; // TODO h
 
@@ -384,23 +382,24 @@ impl Vw {
 				color_format.clone(),
 				present_mode.clone(),
 				&mut present_images[0]);
+		}
 
+		let submit_fence = unsafe {
 			// Link Image Views for each framebuffer
 			asi_vulkan::create_image_view(
 				&mut connection,
 				&color_format,
-				&mut submit_fence,
 				image_count,
 				&mut present_images,
 				&mut present_image_views,
 				present_queue,
-			);
-		}
+			)
+		};
 		// Link Depth Buffer to swapchain
 		let depth_image = unsafe {
 			asi_vulkan::create_depth_buffer(
 				&mut connection,
-				submit_fence,
+				&submit_fence,
 				present_queue,
 				width, height,
 			)
@@ -697,18 +696,18 @@ impl Renderer {
 
 			asi_vulkan::end_cmdbuff(&mut self.vw.connection);
 
-			let fence = asi_vulkan::create_fence(&mut self.vw.connection);
+			{ // Drop when it's done use
+			let fence = asi_vulkan::Fence::new(&mut self.vw.connection);
 
 			asi_vulkan::queue_submit(&mut self.vw.connection,
-				fence,
+				&fence,
 				VkPipelineStage::BottomOfPipe,
 				self.vw.present_queue,
 				Some(rendering_complete_sem));
 				
-			asi_vulkan::wait_fence(&mut self.vw.connection, fence);
+			asi_vulkan::wait_fence(&mut self.vw.connection, &fence);
+			}
 				
-			asi_vulkan::fence_drop(&mut self.vw.connection, fence);
-
 			asi_vulkan::queue_present(&mut self.vw.connection,
 				self.vw.present_queue,
 				rendering_complete_sem,
