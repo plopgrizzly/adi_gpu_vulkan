@@ -20,7 +20,7 @@ use asi_vulkan::FogUniform;
 use asi_vulkan::Sprite;
 use asi_vulkan::Vk;
 
-use ami::Mat4;
+use ami::{ Mat4, IDENTITY };
 
 use ShapeHandle;
 
@@ -75,17 +75,16 @@ pub struct Shape {
 	buffers: [VkBuffer; 3],
 	vertice_count: u32,
 	instance: Sprite,
-	#[allow(dead_code)] // TODO bounds used in octree.
-	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
-	center: ::ami::Vec3<f32>,
-	position: ::ami::Vec3<f32>,
+	bounds: ::ami::BBox,
+	center: ::ami::Vec3,
+	position: ::ami::Vec3,
 }
 
 pub struct Model {
 	shape: asi_vulkan::Buffer,
 	vertex_count: u32,
-	bounds: [(f32, f32); 3], // xMinMax, yMinMax, zMinMax
-	center: ::ami::Vec3<f32>,
+	bounds: ::ami::BBox,
+	center: ::ami::Vec3,
 }
 
 pub struct TexCoords {
@@ -99,12 +98,8 @@ pub struct Gradient {
 }
 
 impl ::ami::Pos for Shape {
-	fn posf(&self) -> ::ami::Vec3<f32> {
-		self.position
-	}
-
-	fn posi(&self) -> ::ami::Vec3<i32> {
-		self.position.into()
+	fn posf(&self) -> ::ami::BBox {
+		self.bounds
 	}
 }
 
@@ -589,10 +584,6 @@ impl Renderer {
 			gui_vec: Vec::new(),
 			opaque_sorted: Vec::new(),
 			alpha_sorted: Vec::new(),
-//			alpha_points: ::ami::Points::new(),
-//			opaque_points: ::ami::Points::new(),
-//			alpha_shapes: Vec::new(),
-//			opaque_shapes: Vec::new(),
 			gradients: Vec::new(),
 			models: Vec::new(),
 			texcoords: Vec::new(),
@@ -623,7 +614,7 @@ impl Renderer {
 	}
 
 	pub fn update(&mut self) {
-		let matrix = ::Mat4::new()
+		let matrix = IDENTITY
 			.rotate(self.rotate_xyz.0, self.rotate_xyz.1,
 				self.rotate_xyz.2)
 			.translate(self.xyz.0, self.xyz.1, self.xyz.2);
@@ -808,7 +799,10 @@ impl Renderer {
 		self.models.push(Model {
 			shape,
 			vertex_count: vertices.len() as u32 / 4,
-			bounds: [(xmin, xmax), (ymin, ymax), (zmin, zmax)],
+			bounds: ::ami::BBox::new(
+				::ami::Vec3::new(xmin, ymin, zmin),
+				::ami::Vec3::new(xmax, ymax, zmax)
+			),
 			center: ::ami::Vec3::new(xtot / n, ytot / n, ztot / n),
 		});
 
@@ -1225,7 +1219,7 @@ impl Renderer {
 	}
 
 	pub fn camera(&mut self) {
-		self.camera_memory.data.mat4 = (::Mat4::new()
+		self.camera_memory.data.mat4 = (IDENTITY
 			.translate(-self.xyz.0, -self.xyz.1, -self.xyz.2)
 			.rotate(-self.rotate_xyz.0, -self.rotate_xyz.1,
 				-self.rotate_xyz.2) * self.projection).0;

@@ -35,7 +35,7 @@ exclude = [
 ]
 
 [dependencies]
-adi_gpu_base = "^0.5"
+adi_gpu_base = { path = "../adi_gpu_base" } # "^0.5"
 asi_vulkan = "^0.4"
-ami = "^0.7"
+ami = { path = "../ami" } # "^0.7"
 libc = "^0.2" # TODO: Remove dependency by having all ffi code in asi crates.
