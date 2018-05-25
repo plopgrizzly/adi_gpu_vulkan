@@ -4,6 +4,7 @@
 use std::{ mem };
 
 // use awi::Window;
+use adi_gpu_base as base;
 use adi_gpu_base::WindowConnection;
 
 mod ffi;
@@ -73,18 +74,17 @@ pub struct Texture {
 pub struct Shape {
 	num_buffers: usize,
 	buffers: [VkBuffer; 3],
-	vertice_count: u32,
 	instance: Sprite,
-	bounds: ::ami::BBox,
-	center: ::ami::Vec3,
-	position: ::ami::Vec3,
+	bbox: ::ami::BBox,
+	model: usize,
+	fans: Vec<(u32, u32)>,
 }
 
 pub struct Model {
 	shape: asi_vulkan::Buffer,
 	vertex_count: u32,
-	bounds: ::ami::BBox,
-	center: ::ami::Vec3,
+	points: Vec<f32>,
+	fans: Vec<(u32, u32)>,
 }
 
 pub struct TexCoords {
@@ -97,9 +97,9 @@ pub struct Gradient {
 	vertex_count: u32,
 }
 
-impl ::ami::Pos for Shape {
-	fn posf(&self) -> ::ami::BBox {
-		self.bounds
+impl ::ami::Collider for Shape {
+	fn bbox(&self) -> ::ami::BBox {
+		self.bbox
 	}
 }
 
@@ -442,23 +442,24 @@ impl Vw {
 
 fn draw_shape(connection: &mut Vk, shape: &Shape) {
 	unsafe {
-		asi_vulkan::cmd_bind_vb(connection,
-			&shape.buffers[..shape.num_buffers]);
+		for i in shape.fans.iter() {
+			asi_vulkan::cmd_bind_vb(connection,
+				&shape.buffers[..shape.num_buffers]);
+			asi_vulkan::cmd_bind_pipeline(connection,
+				shape.instance.pipeline);
+			asi_vulkan::cmd_bind_descsets(connection,
+				shape.instance.pipeline_layout,
+				shape.instance.handles().0/*desc_set*/);
 
-		asi_vulkan::cmd_bind_pipeline(connection,
-			shape.instance.pipeline);
-
-		asi_vulkan::cmd_bind_descsets(connection,
-			shape.instance.pipeline_layout,
-			shape.instance.handles().0/*desc_set*/);
+			asi_vulkan::cmd_draw(connection, i.1,
+				1, i.0, 0);
+		}
 	}
-
-	ffi::cmd_draw(connection, shape.vertice_count);
 }
 
 pub struct Renderer {
 	vw: Vw,
-	ar: f32,
+	ar: f64,
 	opaque_octree: ::ami::Octree<Shape>,
 	alpha_octree: ::ami::Octree<Shape>,
 	gui_vec: Vec<Shape>,
@@ -568,7 +569,7 @@ impl Renderer {
 			vw.render_pass, vw.width, vw.height,
 			&complex_vert, &complex_frag, 1, 3, false);
 
-		let ar = vw.width as f32 / vw.height as f32;
+		let ar = vw.width as f64 / vw.height as f64;
 		let projection = ::base::projection(ar, 90.0);
 		let (camera_memory, effect_memory) = unsafe {
 			asi_vulkan::vw_camera_new(&mut vw.connection,
@@ -598,7 +599,7 @@ impl Renderer {
 			frustum: ::ami::Frustum::new(
 				::ami::Vec3::new(0.0, 0.0, 0.0),
 				100.0 /* TODO: Based on fog.0 + fog.1 */, 90.0,
-				2.0 * ((45.0 * ::std::f32::consts::PI / 180.0).tan() / ar).atan(),
+				(2.0 * ((45.0 * ::std::f64::consts::PI / 180.0).tan() / ar).atan()) as f32,
 				0.0, 0.0), // TODO: FAR CLIP PLANE
 			xyz: (0.0, 0.0, 0.0),
 			rotate_xyz: (0.0, 0.0, 0.0),
@@ -711,12 +712,12 @@ impl Renderer {
 	pub fn resize(&mut self, size: (u32, u32)) {
 		self.vw.width = size.0;
 		self.vw.height = size.1;
-		self.ar = size.0 as f32 / size.1 as f32;
+		self.ar = size.0 as f64 / size.1 as f64;
 		self.frustum = ::ami::Frustum::new(
 			self.frustum.center,
 			self.frustum.radius,
-			90.0, 2.0 * ((45.0 * ::std::f32::consts::PI / 180.0)
-				.tan() / self.ar).atan(),
+			90.0, (2.0 * ((45.0 * ::std::f64::consts::PI / 180.0)
+				.tan() / self.ar).atan()) as f32,
 			self.frustum.xrot, self.frustum.yrot);
 
 		swapchain_delete(&mut self.vw);
@@ -743,7 +744,9 @@ impl Renderer {
 	}
 
 	/// Push a model (collection of vertices) into graphics memory.
-	pub fn model(&mut self, vertices: &[f32]) -> usize {
+	pub fn model(&mut self, vertices: &[f32], fans: Vec<(u32, u32)>)
+		-> usize
+	{
 		let shape = unsafe {
 			asi_vulkan::new_buffer(&mut self.vw.connection,
 				vertices)
@@ -751,59 +754,12 @@ impl Renderer {
 
 		let a = self.models.len();
 
-		let mut xtot = vertices[0];
-		let mut ytot = vertices[1];
-		let mut ztot = vertices[2];
-		let mut xmin = vertices[0];
-		let mut ymin = vertices[1];
-		let mut zmin = vertices[2];
-		let mut xmax = vertices[0];
-		let mut ymax = vertices[1];
-		let mut zmax = vertices[2];
-
-		for i in 4..vertices.len() {
-			match i % 4 {
-				0 => {
-					let x = vertices[i];
-					xtot += x;
-					if x < xmin {
-						xmin = x;
-					} else if x > xmax {
-						xmax = x;
-					}
-				},
-				1 => {
-					let y = vertices[i];
-					ytot += y;
-					if y < ymin {
-						ymin = y;
-					} else if y > ymax {
-						ymax = y;
-					}
-				},
-				2 => {
-					let z = vertices[i];
-					ztot += z;
-					if z < zmin {
-						zmin = z;
-					} else if z > zmax {
-						zmax = z;
-					}
-				},
-				_ => { },
-			}
-		}
-
-		let n = (vertices.len() / 4) as f32;
+		let points = vertices.to_vec();
 
 		self.models.push(Model {
 			shape,
 			vertex_count: vertices.len() as u32 / 4,
-			bounds: ::ami::BBox::new(
-				::ami::Vec3::new(xmin, ymin, zmin),
-				::ami::Vec3::new(xmax, ymax, zmax)
-			),
-			center: ::ami::Vec3::new(xtot / n, ytot / n, ztot / n),
+			points, fans,
 		});
 
 		a
@@ -848,7 +804,7 @@ impl Renderer {
 		a
 	}
 
-	pub fn textured(&mut self, model: usize, mat4: [f32; 16],
+	pub fn textured(&mut self, model: usize, mat4: Mat4,
 		texture: usize, texcoords: usize, alpha: bool,
 		fog: bool, camera: bool) -> ShapeHandle
 	{
@@ -857,6 +813,10 @@ impl Renderer {
 		{
 			panic!("TexCoord length doesn't match vertex length");
 		}
+
+		let bbox = base::vertices_to_bbox(
+			self.models[model].points.as_slice(), mat4
+		);
 
 		// Add an instance
 		let instance = unsafe {
@@ -868,7 +828,7 @@ impl Renderer {
 					&self.style_natexture
 				},
 				TransformFullUniform {
-					mat4,
+					mat4: mat4.to_f32_array(),
 					hcam: fog as u32 + camera as u32,
 				},
 				&self.camera_memory, // TODO: at shader creation, not shape creation
@@ -888,10 +848,8 @@ impl Renderer {
 				self.texcoords[texcoords].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].vertex_count,
-			bounds: self.models[model].bounds,
-			center: self.models[model].center,
-			position: Mat4(mat4) * self.models[model].center,
+			model, bbox,
+			fans: self.models[model].fans.clone(),
 		};
 
 		if !camera && !fog {
@@ -904,10 +862,14 @@ impl Renderer {
 		}
 	}
 
-	pub fn solid(&mut self, model: usize, mat4: [f32; 16], color: [f32; 4],
+	pub fn solid(&mut self, model: usize, mat4: Mat4, color: [f32; 4],
 		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
+		let bbox = base::vertices_to_bbox(
+			self.models[model].points.as_slice(), mat4
+		);
+
 		// Add an instance
 		let instance = unsafe {
 			Sprite::new(
@@ -920,7 +882,7 @@ impl Renderer {
 				TransformAndColorUniform {
 					vec4: color,
 					hcam: fog as u32 + camera as u32,
-					mat4,
+					mat4: mat4.to_f32_array(),
 				},
 				&self.camera_memory,
 				Some(&self.effect_memory),
@@ -937,10 +899,8 @@ impl Renderer {
 				unsafe { mem::uninitialized() },
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].vertex_count,
-			bounds: self.models[model].bounds,
-			center: self.models[model].center,
-			position: Mat4(mat4) * self.models[model].center,
+			model, bbox,
+			fans: self.models[model].fans.clone(),
 		};
 
 		if !camera && !fog {
@@ -953,7 +913,7 @@ impl Renderer {
 		}
 	}
 
-	pub fn gradient(&mut self, model: usize, mat4: [f32; 16], colors: usize,
+	pub fn gradient(&mut self, model: usize, mat4: Mat4, colors: usize,
 		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
 	{
@@ -962,6 +922,10 @@ impl Renderer {
 		{
 			panic!("TexCoord length doesn't match gradient length");
 		}
+
+		let bbox = base::vertices_to_bbox(
+			self.models[model].points.as_slice(), mat4
+		);
 
 		// Add an instance
 		let instance = unsafe {
@@ -973,7 +937,7 @@ impl Renderer {
 					&self.style_nagradient
 				},
 				TransformFullUniform {
-					mat4,
+					mat4: mat4.to_f32_array(),
 					hcam: fog as u32 + camera as u32,
 				},
 				&self.camera_memory,
@@ -991,10 +955,8 @@ impl Renderer {
 				self.gradients[colors].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].vertex_count,
-			bounds: self.models[model].bounds,
-			center: self.models[model].center,
-			position: Mat4(mat4) * self.models[model].center,
+			model, bbox,
+			fans: self.models[model].fans.clone(),
 		};
 
 		if !camera && !fog {
@@ -1007,7 +969,7 @@ impl Renderer {
 		}
 	}
 
-	pub fn faded(&mut self, model: usize, mat4: [f32; 16], texture: usize,
+	pub fn faded(&mut self, model: usize, mat4: Mat4, texture: usize,
 		texcoords: usize, fade_factor: f32, fog: bool,
 		camera: bool) -> ShapeHandle
 	{
@@ -1017,13 +979,17 @@ impl Renderer {
 			panic!("TexCoord length doesn't match vertex length");
 		}
 
+		let bbox = base::vertices_to_bbox(
+			self.models[model].points.as_slice(), mat4
+		);
+
 		// Add an instance
 		let instance = unsafe {
 			Sprite::new(
 				&mut self.vw.connection,
 				&self.style_faded,
 				TransformAndFadeUniform {
-					mat4,
+					mat4: mat4.to_f32_array(),
 					hcam: fog as u32 + camera as u32,
 					fade: fade_factor,
 				},
@@ -1044,10 +1010,8 @@ impl Renderer {
 				self.texcoords[texcoords].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].vertex_count,
-			bounds: self.models[model].bounds,
-			center: self.models[model].center,
-			position: Mat4(mat4) * self.models[model].center,
+			model, bbox,
+			fans: self.models[model].fans.clone(),
 		};
 
 		if !camera && !fog {
@@ -1058,7 +1022,7 @@ impl Renderer {
 		}
 	}
 
-	pub fn tinted(&mut self, model: usize, mat4: [f32; 16],
+	pub fn tinted(&mut self, model: usize, mat4: Mat4,
 		texture: usize, texcoords: usize, color: [f32; 4],
 		alpha: bool, fog: bool, camera: bool)
 		-> ShapeHandle
@@ -1068,6 +1032,10 @@ impl Renderer {
 		{
 			panic!("TexCoord length doesn't match vertex length");
 		}
+
+		let bbox = base::vertices_to_bbox(
+			self.models[model].points.as_slice(), mat4
+		);
 
 		// Add an instance
 		let instance = unsafe {
@@ -1079,7 +1047,7 @@ impl Renderer {
 					&self.style_natinted
 				},
 				TransformAndColorUniform {
-					mat4,
+					mat4: mat4.to_f32_array(),
 					hcam: fog as u32 + camera as u32,
 					vec4: color,
 				},
@@ -1100,10 +1068,8 @@ impl Renderer {
 				self.texcoords[texcoords].vertex_buffer.buffer(),
 				unsafe { mem::uninitialized() }
 			],
-			vertice_count: self.models[model].vertex_count,
-			bounds: self.models[model].bounds,
-			center: self.models[model].center,
-			position: Mat4(mat4) * self.models[model].center,
+			model, bbox,
+			fans: self.models[model].fans.clone(),
 		};
 
 		if !camera && !fog {
@@ -1116,7 +1082,7 @@ impl Renderer {
 		}
 	}
 
-	pub fn complex(&mut self, model: usize, mat4: [f32; 16],
+	pub fn complex(&mut self, model: usize, mat4: Mat4,
 		texture: usize, texcoords: usize, colors: usize, alpha: bool,
 		fog: bool, camera: bool) -> ShapeHandle
 	{
@@ -1128,6 +1094,10 @@ impl Renderer {
 			panic!("TexCoord length doesn't match vertex length");
 		}
 
+		let bbox = base::vertices_to_bbox(
+			self.models[model].points.as_slice(), mat4
+		);
+
 		// Add an instance
 		let instance = unsafe {
 			Sprite::new(
@@ -1138,7 +1108,7 @@ impl Renderer {
 					&self.style_nacomplex
 				},
 				TransformFullUniform {
-					mat4,
+					mat4: mat4.to_f32_array(),
 					hcam: fog as u32 + camera as u32,
 				},
 				&self.camera_memory,
@@ -1158,10 +1128,8 @@ impl Renderer {
 				self.texcoords[texcoords].vertex_buffer.buffer(),
 				self.gradients[colors].vertex_buffer.buffer(),
 			],
-			vertice_count: self.models[model].vertex_count,
-			bounds: self.models[model].bounds,
-			center: self.models[model].center,
-			position: Mat4(mat4) * self.models[model].center,
+			model, bbox,
+			fans: self.models[model].fans.clone(),
 		};
 
 		if !camera && !fog {
@@ -1176,13 +1144,17 @@ impl Renderer {
 
 	pub fn transform(&mut self, shape: &mut ShapeHandle, transform: ::Mat4){
 		let uniform = TransformUniform {
-			mat4: transform.0,
+			mat4: transform.to_f32_array(),
 		};
 
-		match *shape {
+		match shape {
 			ShapeHandle::Opaque(ref mut x) => {
-				self.opaque_octree[*x].position = transform *
-					self.opaque_octree[*x].center;
+				let model = self.opaque_octree[*x].model;
+				let bbox = base::vertices_to_bbox(
+					self.models[model].points.as_slice(),
+					transform);
+
+				self.opaque_octree[*x].bbox = bbox;
 				let shape = self.opaque_octree.remove(*x);
 				*x = self.opaque_octree.add(shape);
 
@@ -1191,8 +1163,12 @@ impl Renderer {
 					&uniform);
 			},
 			ShapeHandle::Alpha(ref mut x) => {
-				self.alpha_octree[*x].position = transform *
-					self.alpha_octree[*x].center;
+				let model = self.alpha_octree[*x].model;
+				let bbox = base::vertices_to_bbox(
+					self.models[model].points.as_slice(),
+					transform);
+
+				self.alpha_octree[*x].bbox = bbox;
 				let shape = self.alpha_octree.remove(*x);
 				*x = self.alpha_octree.add(shape);
 
@@ -1201,15 +1177,32 @@ impl Renderer {
 					&uniform);
 			},
 			ShapeHandle::Gui(x) => {
-				let x = x as usize; // for indexing
+				let x = *x as usize; // for indexing
 
-				self.gui_vec[x].position = transform *
-					self.gui_vec[x].center;
+				let model = self.gui_vec[x].model;
+				let bbox = base::vertices_to_bbox(
+					self.models[model].points.as_slice(),
+					transform);
+				self.gui_vec[x].bbox = bbox;
 
 				ffi::copy_memory(&mut self.vw.connection,
 					self.gui_vec[x].instance.uniform_memory.memory(),
 					&uniform);
 			},
+		}
+	}
+
+	pub fn collision(&self, shape: &ShapeHandle, force: &mut ::ami::Vec3)
+		-> Option<u32>
+	{
+		match shape {
+			ShapeHandle::Opaque(x) => {
+				self.opaque_octree.bounce_test(*x, force)
+			},
+			ShapeHandle::Alpha(x) => {
+				self.alpha_octree.bounce_test(*x, force)
+			},
+			_ => panic!("No gui collision detection!")
 		}
 	}
 
@@ -1222,7 +1215,8 @@ impl Renderer {
 		self.camera_memory.data.mat4 = (IDENTITY
 			.translate(-self.xyz.0, -self.xyz.1, -self.xyz.2)
 			.rotate(-self.rotate_xyz.0, -self.rotate_xyz.1,
-				-self.rotate_xyz.2) * self.projection).0;
+				-self.rotate_xyz.2) * self.projection)
+			.to_f32_array();
 
 		self.camera_memory.update(&mut self.vw.connection);
 	}

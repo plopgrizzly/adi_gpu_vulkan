@@ -70,9 +70,3 @@ pub fn copy_memory_pitched<T>(connection: &mut Vk, vk_memory: VkDeviceMemory,
 		asi_vulkan::unmap_memory(connection, vk_memory);
 	}
 }
-
-pub fn cmd_draw(connection: &mut Vk, vertex_count: u32) {
-	unsafe {
-		asi_vulkan::cmd_draw(connection, vertex_count, 1, 0, 0);
-	}
-}

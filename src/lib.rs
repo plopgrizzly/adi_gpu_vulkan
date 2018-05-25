@@ -62,8 +62,8 @@ impl base::Display for Display {
 		self.renderer.camera();
 	}
 
-	fn model(&mut self, vertices: &[f32]) -> Model {
-		Model(self.renderer.model(vertices))
+	fn model(&mut self, vertices: &[f32], fans: Vec<(u32, u32)>) -> Model {
+		Model(self.renderer.model(vertices, fans))
 	}
 
 	fn fog(&mut self, fog: Option<(f32, f32)>) -> () {
@@ -97,7 +97,7 @@ impl base::Display for Display {
 		color: [f32; 4], blending: bool, fog: bool,
 		camera: bool) -> Shape
 	{
-		base::new_shape(self.renderer.solid(model.0, transform.0, color,
+		base::new_shape(self.renderer.solid(model.0, transform, color,
 			blending, fog, camera))
 	}
 
@@ -106,7 +106,7 @@ impl base::Display for Display {
 		colors: Gradient, blending: bool, fog: bool,
 		camera: bool) -> Shape
 	{
-		base::new_shape(self.renderer.gradient(model.0, transform.0,
+		base::new_shape(self.renderer.gradient(model.0, transform,
 			colors.0, blending, fog, camera))
 	}
 
@@ -115,7 +115,7 @@ impl base::Display for Display {
 		texture: &Texture, tc: TexCoords, blending: bool,
 		fog: bool, camera: bool) -> Shape
 	{
-		base::new_shape(self.renderer.textured(model.0, transform.0,
+		base::new_shape(self.renderer.textured(model.0, transform,
 			texture.0, tc.0, blending, fog, camera))
 	}
 
@@ -124,7 +124,7 @@ impl base::Display for Display {
 		texture: &Texture, tc: TexCoords, alpha: f32,
 		fog: bool, camera: bool) -> Shape
 	{
-		base::new_shape(self.renderer.faded(model.0, transform.0,
+		base::new_shape(self.renderer.faded(model.0, transform,
 			texture.0, tc.0, alpha, fog, camera))
 	}
 
@@ -133,7 +133,7 @@ impl base::Display for Display {
 		texture: &Texture, tc: TexCoords, tint: [f32; 4], blending: bool,
 		fog: bool, camera: bool) -> Shape
 	{
-		base::new_shape(self.renderer.tinted(model.0, transform.0,
+		base::new_shape(self.renderer.tinted(model.0, transform,
 			texture.0, tc.0, tint, blending, fog, camera))
 	}
 
@@ -142,12 +142,16 @@ impl base::Display for Display {
 		texture: &Texture, tc: TexCoords, tints: Gradient,
 		blending: bool, fog: bool, camera: bool) -> Shape
 	{
-		base::new_shape(self.renderer.complex(model.0, transform.0,
+		base::new_shape(self.renderer.complex(model.0, transform,
 			texture.0, tc.0, tints.0, blending, fog, camera))
 	}
 
 	fn transform(&mut self, shape: &mut Shape, transform: Mat4) {
 		self.renderer.transform(&mut base::get_shape(shape), transform);
+	}
+
+	fn collision(&self, shape: &Shape, force: &mut Vec3) -> Option<u32> {
+		self.renderer.collision(&base::get_shape(shape), force)
 	}
 
 	fn resize(&mut self, wh: (u32, u32)) -> () {
