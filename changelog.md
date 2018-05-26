@@ -1,5 +1,8 @@
+## 0.5.1
+Do less commands during draw - GIANT speed increase.
+
 ## 0.5
-Update to newest adi_gpu_base.
+Update to newest adi\_gpu\_base.
 
 ## ...
 

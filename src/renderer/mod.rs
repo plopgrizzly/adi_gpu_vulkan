@@ -442,15 +442,15 @@ impl Vw {
 
 fn draw_shape(connection: &mut Vk, shape: &Shape) {
 	unsafe {
-		for i in shape.fans.iter() {
-			asi_vulkan::cmd_bind_vb(connection,
-				&shape.buffers[..shape.num_buffers]);
-			asi_vulkan::cmd_bind_pipeline(connection,
-				shape.instance.pipeline);
-			asi_vulkan::cmd_bind_descsets(connection,
-				shape.instance.pipeline_layout,
-				shape.instance.handles().0/*desc_set*/);
+		asi_vulkan::cmd_bind_vb(connection,
+			&shape.buffers[..shape.num_buffers]);
+		asi_vulkan::cmd_bind_pipeline(connection,
+			shape.instance.pipeline);
+		asi_vulkan::cmd_bind_descsets(connection,
+			shape.instance.pipeline_layout,
+			shape.instance.handles().0/*desc_set*/);
 
+		for i in shape.fans.iter() {
 			asi_vulkan::cmd_draw(connection, i.1,
 				1, i.0, 0);
 		}

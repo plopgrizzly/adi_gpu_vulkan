@@ -13,7 +13,7 @@
 
 [package]
 name = "adi_gpu_vulkan"
-version = "0.5.0"
+version = "0.5.1"
 authors = [
 	"Jeron A. Lau <jeron.lau@plopgrizzly.com>"
 ]
