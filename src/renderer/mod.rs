@@ -230,7 +230,7 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 	let staged = !vw.connection.sampled();
 
 	let mappable_image = asi_vulkan::Image::new(
-		&mut vw.connection, width, height, VkFormat::R8g8b8a8Srgb,
+		&mut vw.connection, width, height, VkFormat::R8g8b8a8Unorm,
 		VkImageTiling::Linear,
 		if staged { VkImageUsage::TransferSrcBit }
 		else { VkImageUsage::SampledBit },
@@ -248,7 +248,7 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 	let image = if staged {
 		Some(asi_vulkan::Image::new(
 			&mut vw.connection, width, height,
-			VkFormat::R8g8b8a8Srgb,
+			VkFormat::R8g8b8a8Unorm,
 			VkImageTiling::Optimal,
 			VkImageUsage::TransferDstAndUsage,
 			VkImageLayout::Undefined, 0,
@@ -256,14 +256,6 @@ fn new_texture(vw: &mut Vw, width: u32, height: u32) -> Texture {
 	} else {
 		None
 	};
-
-/*	let view = unsafe {
-		asi_vulkan::create_imgview(&mut vw.connection,
-			image.as_ref().unwrap_or(&mappable_image),
-			VkFormat::R8g8b8a8Srgb,
-			true
-		)
-	};*/
 
 	Texture {
 		staged, mappable_image,	image, pitch: pitch as u32,
