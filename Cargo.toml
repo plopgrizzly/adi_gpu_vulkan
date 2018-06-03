@@ -23,7 +23,7 @@ documentation = "https://docs.rs/adi_gpu_vulkan"
 homepage = "http://plopgrizzly.com/adi_gpu_vulkan"
 repository = "https://github.com/plopgrizzly/adi_gpu_vulkan"
 
-readme = "readme.md"
+readme = "README.md"
 description = "Vulkan implementation for adi_gpu"
 keywords = [ "vulkan", "graphics", "gui", "hardware", "rendering" ]
 categories = ["gui", "game-engines", "hardware-support", "multimedia::video",
