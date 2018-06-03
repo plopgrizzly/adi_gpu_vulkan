@@ -13,7 +13,7 @@
 
 [package]
 name = "adi_gpu_vulkan"
-version = "0.5.1"
+version = "0.5.2"
 authors = [
 	"Jeron A. Lau <jeron.lau@plopgrizzly.com>"
 ]
@@ -23,19 +23,19 @@ documentation = "https://docs.rs/adi_gpu_vulkan"
 homepage = "http://plopgrizzly.com/adi_gpu_vulkan"
 repository = "https://github.com/plopgrizzly/adi_gpu_vulkan"
 
-readme = "README.md"
+readme = "readme.md"
 description = "Vulkan implementation for adi_gpu"
 keywords = [ "vulkan", "graphics", "gui", "hardware", "rendering" ]
 categories = ["gui", "game-engines", "hardware-support", "multimedia::video",
 	"rendering::graphics-api"]
 
 exclude = [
-	"examples/*", "CODE_OF_CONDUCT.md", "CONTRIBUTING.md", ".gitignore",
-	"_config.yml", "ISSUE_TEMPLATE.md", "icon.png", "icon.ico"
+	"examples/*", "code_of_conduct.md", "contributing.md", ".gitignore",
+	"_config.yml", "issue_template.md", "icon.png", "icon.ico"
 ]
 
 [dependencies]
 adi_gpu_base = "^0.6"
-asi_vulkan = "^0.5"
+asi_vulkan = "^0.6"
 ami = "^0.8"
 libc = "^0.2" # TODO: Remove dependency by having all ffi code in asi crates.
