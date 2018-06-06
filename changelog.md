@@ -1,3 +1,6 @@
+## 0.5.3
+* Update asi\_vulkan to fix different texturing behavior from adi\_gpu\_opengl
+
 ## 0.5.2
 * Fixed platform-dependant coloration bug.
 
